@@ -1,0 +1,2579 @@
+<?php
+
+namespace App\Controller;
+use App\Controller;
+use Cake\Core\Configure; 
+use Cake\Network\Exception\ForbiddenException;
+use Cake\Network\Exception\NotFoundException;
+use Cake\View\Exception\MissingTemplateException;
+use Cake\Auth\DefaultPasswordHasher;
+use Cake\ORM\TableRegistry;
+use Cake\Event\Event;
+use Cake\Datasource\ConnectionManager;
+use Cake\View\Helper\PaginatorHelper;
+class SearchController extends AppController
+{
+	
+	public function initialize()
+	{
+         parent::initialize();
+       	$this->loadModel('Users');
+        $this->Auth->allow(['_setPassword','signup','findUsername','login','logout','verify','getphonecode','forgotpassword','forgetCpass','sociallogin','jobrefine']);
+        
+    }
+    	
+
+  public function index_ajax() {
+    $this->Carroceria->recursive = 0;
+    $this->layout = 'ajax';
+    $conditions = $this->BuildConditions->buildConditions($this->modelClass);
+    $this->set('carrocerias', $this->paginate(null, $conditions));
+}	
+    	
+public function search(){
+	
+
+	$savejobarray=array();
+	$this->loadModel('Profile');
+	$this->loadModel('jrement');
+	$this->loadModel('Savejobs');
+	$this->loadModel('JobApplication');
+	$this->loadModel('Settings');
+	if ($this->request->is(['post', 'put'])){ 
+		   $setting=$this->Settings->find('all')->first();
+	      
+	      $this->set('ping_amt',$setting['ping_amt']);
+$userid = $this->request->session()->read('Auth.User.id');
+		//pr($this->request->data); die;
+		$bookjob = $this->JobApplication->find('all')->where(['user_id' =>$userid])->toarray();
+$this->set('alliedjobs',$bookjob);
+
+		 $user_id = $this->request->session()->read('Auth.User.id');
+		$Savejobsdata = $this->Savejobs->find('all')->where(['Savejobs.user_id'=>$user_id])->order(['Savejobs.id' => 'ASC'])->toarray();
+
+		
+
+		foreach ($Savejobsdata as $key => $value) {
+		
+			$savejobarray[]=$value['job_id'];
+			# code...
+		}
+
+		$this->set('savejobarray',$savejobarray);
+
+		$this->loadModel('Packfeature');
+	   
+	    $packfeature = $this->Packfeature->find('all')->where(['Packfeature.user_id'=>$user_id,'Packfeature.number_job_application_month >'=>0,'Packfeature.number_job_application_daily >'=>0,'Packfeature.number_of_quote_daily >'=>0])->order(['Packfeature.id' => 'ASC'])->first();
+	  
+	    $this->set('havevalidilty', $packfeature);
+
+	$title = $this->request->data['name'];
+	$type=$this->request->data['optiontype'];
+	$prr=array();
+
+	if($type==1){
+		$this->set('type',$type);
+
+		//$searchdata = $this->Requirement->find('all')->contain(['RequirmentVacancy'=>['Skill','Currency','Paymentfequency']])->where(['Requirement.title LIKE'=>'%'.trim($title).'%','Requirement.last_date_app > '=> date('Y-m-d H:i:s')])->order(['Requirement.created'=>'DESC'])->toarray();
+		 
+ $salary=explode("-",$_SESSION['Refinejobfilter']['salaryrange']);
+
+$min=$salary['0'];
+if($min){
+	$min=$min;
+}else{
+	$min=0;
+}
+
+$max=$salary['1'];	
+if($max){
+	$max=$max;
+}else{
+	$max=50000;
+}
+
+$date=date('Y-m-d H:i:s');
+$user_id=$this->request->session()->read('Auth.User.id');
+  $query="SELECT requirement.id, requirement.user_id,requirement.last_date_app,eventtypes.name as eventname,requirement.event_type,currencys.name as currencysname,requirement_vacancy.payment_amount,payment_fequency.name as payment_feqname,skill_type.name as skillname,requirement.image as image,requirement.title as title,currencys.id as currencyid,payment_fequency.id as pfqid,skill_type.id as skillid, (SELECT subscriptions.package_id FROM subscriptions
+WHERE subscriptions.package_type='PR' and subscriptions.user_id=requirement.user_id) as p_package, (Select subscriptions.package_id FROM subscriptions
+WHERE subscriptions.package_type='RC' and subscriptions.user_id=requirement.user_id) as r_package, (SELECT visibility_matrix.ordernumber FROM `visibility_matrix` where visibility_matrix.profilepack_id=p_package and visibility_matrix.recruiter_id=r_package) as order_num   FROM `requirement` LEFT JOIN requirement_vacancy ON requirement.id = requirement_vacancy.requirement_id  LEFT JOIN eventtypes ON requirement.event_type = eventtypes.id LEFT JOIN skill_type ON requirement_vacancy.telent_type = skill_type.id LEFT JOIN currencys ON requirement_vacancy.payment_currency = currencys.id LEFT JOIN payment_fequency ON requirement_vacancy.payment_freq = payment_fequency.id  where  requirement.last_date_app > '$date' and requirement.user_id != '$user_id' and  requirement_vacancy.payment_amount>='$min' and requirement_vacancy.payment_amount <= '$max' ";
+
+	
+	if(!empty($_SESSION['Refinejobfilter']['keyword']) ){
+		
+			 $title=$_SESSION['Refinejobfilter']['keyword'];
+			$query.=" and title Like '%$title%' or talent_requirement_description Like '%$title%' or location Like '%$title%' or skill_type.name Like '%$title%' ";
+		
+
+	}
+	if(!empty($_SESSION['Refinejobfilter']['currency']) ){
+		
+			 
+			$currency=$_SESSION['Refinejobfilter']['currency'];
+			$query.=" And requirement_vacancy.payment_currency='$currency'";
+		
+	}
+	if(!empty($_SESSION['Refinejobfilter']['payment']) && $_SESSION['Refinejobfilter']['payment']!=0){
+	
+			$payment=$_SESSION['Refinejobfilter']['payment'];
+			$query.=" And requirement_vacancy.payment_freq='$payment'";
+
+	}
+	if(!empty($_SESSION['Refinejobfilter']['telenttype']) && $_SESSION['Refinejobfilter']['telenttype']!=0){
+
+			
+
+			$telenttype=$_SESSION['Refinejobfilter']['telenttype'];
+		    $query.=" And requirement_vacancy.telent_type='$telenttype'";
+	}
+	if(!empty($_SESSION['Refinejobfilter']['eventtype'])){
+
+	
+
+			$eventtype=$_SESSION['Refinejobfilter']['eventtype'];
+		    $query.=" And requirement.event_type='$eventtype'"; 
+	}
+	if(!empty($_SESSION['Refinejobfilter']['time'])){
+
+		
+			$time=$_SESSION['Refinejobfilter']['time'];
+			$query.=" And requirement.time='$time'";
+
+	}
+	if(!empty($this->request->data['name'])){
+	$title=$this->request->data['name'];
+	$query.=" and title Like '%$title%' or talent_requirement_description Like '%$title%' or location Like '%$title%' or skill_type.name Like '%$title%' ";
+	$_SESSION['Refinejobfilter']['keyword']=$title;
+	}
+
+
+
+	$query.="order by order_num, requirement.user_id asc";
+
+
+		$con = ConnectionManager::get('default');
+		$searchdata = $con->execute($query)->fetchAll('assoc');
+
+	
+		//$this->dd($searchdata); die;
+$this->set('searchdata', $searchdata);
+
+	 $currencyarray=array();
+		 $payemntfaq=array();
+		 $talentype=array();
+		 $eventtype=array();
+		 foreach($searchdata as $value){
+		
+		 //	pr($value);
+		
+if($date<$value['last_date_app']) {
+		 $eventtype[$value['event_type']]=$value['eventname'];
+		 	
+
+				$currencyarray[$value['currencyid']]=$value['currencysname'];
+
+				$payemntfaq[$value['pfqid']]=$value['payment_feqname'];
+
+				$talentype[$value['skillid']]=$value['skillname'];
+
+		 		
+
+		 }
+		 }
+//die;
+		 
+		 $this->set('title', $title);
+		 $this->set('currencyarray', $currencyarray);
+		 $this->set('payemntfaq', $payemntfaq);
+		 $this->set('talentype', $talentype);
+		 $this->set('eventtype', array_unique($eventtype));
+
+	}else{
+		$user_id=$this->request->session()->read('Auth.User.id');
+//pr($this->request->data); die;
+
+		 $session = $this->request->session();
+	     $session->delete('Profilerefinedata');
+if($this->request->data['name']){
+	     $this->request->session()->write('Profilerefinedata',$this->request->data['name']);
+	 }
+
+
+		if(!empty($title)) {
+			$this->set('title',$title);
+		$use=array('Profile.name LIKE'=>'%'.trim($title).'%','Users.role_id'=>'2','Users.id !='=>$user_id);
+		$prr[]=$use;
+
+	}else{
+		$use=array('Users.role_id'=>'2','Users.id !='=>$user_id);
+		$prr[]=$use;
+
+	}
+
+
+		$searchdata = $this->Profile->find('all')->contain(['Enthicity','Users'=>array('Uservital'=>array('Vques','Voption'),'Languageknown'=>array('Language'),'Performancelanguage'=>array('Language'),'Skillset'=>array('Skill'),'Professinal_info','Performancedesc2'=>array('Paymentfequency'))])->where($prr)->toarray();
+
+
+	
+		$performancelan=array();
+		$languageknown=array();
+		$paymentfaq=array();
+		$skill=array();
+		$Enthicity=array();
+		$querytionarray=array();
+		$ansarray=array();
+		foreach($searchdata as $value){
+
+			
+
+		foreach($value['user']['uservital'] as $vital){
+
+//pr($vital);
+
+if($vital['option_value_id']){
+				//pr($vital);
+				//$querytionarray[$vital['vque']['id']]=$vital['vque']['question'];
+				if($vital['option_type_id']!=3 && $vital['option_type_id']!=4 && $vital['option_type_id']!=2 ) {
+				$querytionarray[$vital['vque']['question']][$vital['voption']['id']]=$vital['voption']['value'];
+					}
+
+
+}
+
+				//$ansarray[$vital['voption']['id']]=$vital['voption']['value'];
+
+				}
+
+				 $Enthicity[$value['enthicity']['id']]=$value['enthicity']['title'];
+
+				foreach($value['user']['languageknown'] as $lan){
+					//pr($lan);
+				$languageknown[$lan['language']['id']]=$lan['language']['name'];
+				}
+
+
+				foreach($value['user']['performancelanguage'] as $lan){
+					//pr($lan);
+				$performancelan[$lan['language']['id']]=$lan['language']['name'];
+				}
+
+				
+				foreach($value['user']['performancedesc2'] as $paymentfaqvalue){
+
+					
+				$paymentfaq[$paymentfaqvalue['paymentfequency']['id']]=$paymentfaqvalue['paymentfequency']['name'];
+				}
+
+				foreach($value['user']['skillset'] as $skilk){
+						
+				
+				$skill[$skilk['skill']['id']]=$skilk['skill']['name'];
+				}
+
+
+			
+
+				
+		}
+
+
+
+		$this->set('searchdata', $searchdata);
+		$this->set('performancelan', $performancelan);
+		$this->set('languageknown', $languageknown);
+		$this->set('paymentfaq', $paymentfaq);
+		$this->set('skill', $skill);
+		$this->set('Enthicity', $Enthicity);
+		$this->set('querytionarray', $querytionarray);
+
+
+
+		
+
+	}
+
+
+
+	}	
+
+}
+public function advanceJobsearch(){
+	
+	 $this->loadModel('Country');
+	 $this->loadModel('Paymentfequency');
+	 $this->loadModel('Eventtype');
+	$country = $this->Country->find('list')->select(['id','name'])->toarray();
+	    $this->set('country', $country);
+	$Eventtype = $this->Eventtype->find('list')->where(['Eventtype.status'=>'Y'])->select(['id','name'])->toarray();
+	    $this->set('Eventtype', $Eventtype);
+	    $Paymentfequency = $this->Paymentfequency->find('all')->select(['id','name'])->toarray();
+	    $this->set('Paymentfequency', $Paymentfequency);
+
+ $session = $this->request->session();
+	    $session->delete('Refinejobfilter');
+		
+
+}
+
+public function advanceProfilesearch(){
+	
+	 $this->loadModel('Country');
+	 $this->loadModel('Paymentfequency');
+	$country = $this->Country->find('list')->select(['id','name'])->toarray();
+	    $this->set('country', $country);
+	    $Paymentfequency = $this->Paymentfequency->find('all')->select(['id','name'])->toarray();
+	    $this->set('Paymentfequency', $Paymentfequency);
+
+
+		
+
+}
+
+public function advanceJobsearchfind(){
+
+if ($this->request->is(['post', 'put'])){
+
+
+$this->loadModel('Requirement');
+
+ $this->request->session()->write('Refinejobfilter',$this->request->data);
+
+	$this->set('data',$this->request->data);
+	
+$user_id=$this->request->session()->read('Auth.User.id');
+	$date=date('Y-m-d H:i:s');
+	if(empty($this->request->data['title']) && empty($this->request->data['skill']) && empty($this->request->data['eventtype']) && empty($this->request->data['country_id']) & empty($this->request->data['state_id']) && empty($this->request->data['city_id']) & empty($this->request->data['latitude']) && empty($this->request->data['longitude']) & empty($this->request->data['gender']) && empty($this->request->data['Paymentfequency']) && empty($this->request->data['eventtype'])&& empty($this->request->data['within']) && empty($this->request->data['role_id'])&& empty($this->request->data['recname']) && empty($this->request->data['time'])&& empty($this->request->data['event_from_date']) && empty($this->request->data['event_to_date']) && empty($this->request->data['talent_required_fromdate']) && empty($this->request->data['talent_required_todate']) && empty($this->request->data['last_date_app']) && empty($this->request->data['last_date_appbefore']) ){
+	
+
+		
+		$sql="SELECT requirement.id, requirement.user_id,requirement.last_date_app,requirement.event_type,eventtypes.name as eventname,currencys.name as currencysname,payment_fequency.name as payment_feqname,skill_type.name as skillname,requirement.image as image,requirement.title as title,currencys.id as currencyid,payment_fequency.id as pfqid,skill_type.id as skillid, (SELECT subscriptions.package_id FROM subscriptions
+		WHERE subscriptions.package_type='PR' and subscriptions.user_id=requirement.user_id) as p_package, (Select subscriptions.package_id FROM subscriptions
+		WHERE subscriptions.package_type='RC' and subscriptions.user_id=requirement.user_id) as r_package, (SELECT visibility_matrix.ordernumber FROM `visibility_matrix` where visibility_matrix.profilepack_id=p_package and visibility_matrix.recruiter_id=r_package) as order_num   FROM `requirement` LEFT JOIN requirement_vacancy ON requirement.id = requirement_vacancy.requirement_id LEFT JOIN eventtypes ON requirement.event_type = eventtypes.id  LEFT JOIN skill_type ON requirement_vacancy.telent_type = skill_type.id LEFT JOIN currencys ON requirement_vacancy.payment_currency = currencys.id LEFT JOIN payment_fequency ON requirement_vacancy.payment_freq = payment_fequency.id  where  requirement.last_date_app > '$date' and requirement.user_id != '$user_id' ";
+
+	}else{
+	
+	/*$sql1="SELECT GROUP_CONCAT(requirement_vacancy.telent_type) as skill ,users.name , users.role_id, requirement.id, requirement.user_id,requirement.last_date_app,requirement.event_type,currencys.name as currencysname,payment_fequency.name as payment_feqname,skill_type.name as skillname,requirement.image as image,requirement.title as title,currencys.id as currencyid,payment_fequency.id as pfqid,skill_type.id as skillid, (SELECT subscriptions.package_id FROM subscriptions
+		WHERE subscriptions.package_type='PR' and subscriptions.user_id=requirement.user_id) as p_package, (Select subscriptions.package_id  FROM subscriptions
+		WHERE subscriptions.package_type='RC' and subscriptions.user_id=requirement.user_id) as r_package, (SELECT visibility_matrix.ordernumber FROM `visibility_matrix` where visibility_matrix.profilepack_id=p_package and visibility_matrix.recruiter_id=r_package) as order_num   FROM  `requirement` LEFT JOIN requirement_vacancy ON requirement.id = requirement_vacancy.requirement_id  LEFT JOIN skill_type ON requirement_vacancy.telent_type = skill_type.id LEFT JOIN currencys ON requirement_vacancy.payment_currency = currencys.id LEFT JOIN payment_fequency ON requirement_vacancy.payment_freq = payment_fequency.id LEFT JOIN users ON requirement.user_id = users.id  where  requirement.last_date_app > '$date' "; */
+if($this->request->data['latitude']){
+$loc_lat=$this->request->data['latitude'];
+}else{
+$loc_lat="";
+}
+
+if($this->request->data['longitude']){
+	$loc_long=$this->request->data['longitude'];
+
+}else{
+	$loc_long="";
+	
+}
+if($this->request->data['unit']="km"){
+	$kmmile="3956";
+
+}else{
+	$kmmile="6371";
+	
+}	
+		$salary=explode("-",$_SESSION['advanceRefinejobfilter']['salaryrange']);
+
+		$min=$salary['0'];
+		if($min){
+		$min=$min;
+		}else{
+		$min=0;
+		}
+
+		$max=$salary['1'];
+		if($max){
+		$max=$max;
+		}else{
+		$max=50000;
+		}
+		$user_id=$this->request->session()->read('Auth.User.id');
+		if(!empty($this->request->data['skill']) && $this->request->data['skill']!=0){
+		
+			$skill=$this->request->data['skill'];
+			$skillarray=explode(",",$skill);
+			//print_r($skillarray);  die;
+			
+			for($i=0;$i<count($skillarray);$i++){
+				//$skillvalue=$skillarray[$i];
+				
+				if(count($skillarray)==1){
+				 $skillcheck.="requirement_vacancy.telent_type like '$skillarray[$i]' and";
+				}
+				elseif($i==0){
+			$skillcheck.="requirement_vacancy.telent_type like '$skillarray[$i]'";
+			    }else if($i==count($skillarray)-1){
+			    $skillcheck.=" or requirement_vacancy.telent_type like '$skillarray[$i]' and";
+			    }else{
+			     $skillcheck.=" or requirement_vacancy.telent_type like '$skillarray[$i]'";
+			    }
+			    
+			}
+			//$have.="having skill Like '%$skill%'";
+
+		
+	}else{
+		$skillcheck="";
+	}
+
+//pr($this->request->data);
+	if($this->request->data['checkboxafter']==1) {
+
+	if( !empty($this->request->data['last_date_app']) ){
+	
+			 $last_date_app=date("Y-m-d H:s:i",strtotime($this->request->data['last_date_app']));
+			 $lastdatecon="  requirement.last_date_app>='$last_date_app'";
+		
+			
+
+	}
+ }else{
+ 	$lastdateset=1;
+ 	//echo "Testing";
+ 	$lastdatecon="requirement.last_date_app>='$date'";
+
+ }	
+
+if($this->request->data['checkboxbefore']==2) {
+
+	if( !empty($this->request->data['last_date_appbefore']) ){
+		
+			 $last_date_app=date("Y-m-d H:s:i",strtotime($this->request->data['last_date_appbefore']));
+			 $lastdatecon="  requirement.last_date_app<='$last_date_app'";
+if($this->request->data['checkboxafter']==1) {
+
+			 $lastdatecon.=" and requirement.last_date_app<='$last_date_app'";
+		}
+			
+
+	}
+		
+
+}else{
+	if($this->request->data['checkboxafter']!=1) {
+		//echo "tes";
+		 	$lastdatecon="requirement.last_date_app>='$date'";
+
+	}
+}
+
+
+if($this->request->data['checkboxbefore']){
+	if($this->request->data['checkboxafter']){
+	//echo "Test";
+		$lastdatecon="requirement.last_date_app>='$date'";
+}}
+//echo $lastdatecon;
+  $sql="SELECT requirement_vacancy.telent_type , requirement_vacancy.sex as sex,users.name , users.role_id,eventtypes.name as eventname, requirement.id, requirement.user_id,requirement.last_date_app,requirement.event_type,currencys.name as currencysname,payment_fequency.name as payment_feqname,skill_type.name as skillname,requirement.image as image,requirement.title as title,currencys.id as currencyid, 1.609344 * '".$kmmile."' * acos( cos( radians('".$loc_lat."') ) * cos( radians(requirement.latitude) ) * cos( radians(requirement.longitude) - radians('".$loc_long."') ) + sin( radians('".$loc_lat."') ) * sin( radians(requirement.latitude) ) ) AS cdistance,payment_fequency.id as pfqid,skill_type.id as skillid, (SELECT subscriptions.package_id FROM subscriptions
+		WHERE subscriptions.package_type='PR' and subscriptions.user_id=requirement.user_id) as p_package, (Select subscriptions.package_id  FROM subscriptions
+		WHERE subscriptions.package_type='RC' and subscriptions.user_id=requirement.user_id) as r_package, (SELECT visibility_matrix.ordernumber FROM `visibility_matrix` where visibility_matrix.profilepack_id=p_package and visibility_matrix.recruiter_id=r_package) as order_num   FROM  `requirement` LEFT JOIN requirement_vacancy ON requirement.id = requirement_vacancy.requirement_id  LEFT JOIN skill_type ON requirement_vacancy.telent_type = skill_type.id LEFT JOIN currencys ON requirement_vacancy.payment_currency = currencys.id LEFT JOIN payment_fequency ON requirement_vacancy.payment_freq = payment_fequency.id LEFT JOIN users ON requirement.user_id = users.id LEFT JOIN eventtypes ON eventtypes.id = requirement.event_type where $skillcheck $lastdatecon and  requirement_vacancy.payment_amount>='$min' and requirement_vacancy.payment_amount <= '$max' and requirement.user_id !='$user_id'";
+
+		
+
+
+
+if($_SESSION['Refinejobfilter']['currency']){
+
+	$currnecy=$_SESSION['Refinejobfilter']['currency'];
+	$sql.=" And requirement_vacancy.payment_currency='$currnecy'";
+
+}
+
+
+if($_SESSION['advanceRefinejobfilter']['payment']){
+
+	$payment=$_SESSION['advanceRefinejobfilter']['payment'];
+	$sql.=" And requirement_vacancy.payment_freq='$payment'";
+
+}
+
+if($_SESSION['advanceRefinejobfilter']['location']){
+
+	$location=$_SESSION['advanceRefinejobfilter']['location'];
+	$sql.=" And requirement.location='$location'";
+
+}
+
+if($_SESSION['advanceRefinejobfilter']['telenttype']){
+
+	$telenttype=$_SESSION['advanceRefinejobfilter']['telenttype'];
+	$sql.=" And requirement_vacancy.telent_type='$telenttype'";
+
+}
+
+if($_SESSION['advanceRefinejobfilter']['eventtype']){
+	$eventtype=$_SESSION['advanceRefinejobfilter']['eventtype'];
+	$sql.=" And requirement.event_type='$eventtype'";
+
+}
+	if($_SESSION['advanceRefinejobfilter']['time']){
+	$time=$_SESSION['advanceRefinejobfilter']['time'];
+	$sql.=" And requirement.time='$time'";
+
+}
+	
+	if(!empty($this->request->data['title'])){
+	$title=$this->request->data['title'];
+	$sql.=" And requirement.title Like '%$title%'  or talent_requirement_description Like '%$title%'  or skill_type.name Like '%$title%' ";
+	
+	 
+	}
+
+
+
+	if(!empty($this->request->data['gender'])) {
+		
+	
+			$sex=$this->request->data['gender'];
+			if($sex!="a"){
+			$sql.=" And requirement_vacancy.sex='$sex'";
+			}
+	}
+	if(!empty($this->request->data['Paymentfequency'])){
+
+
+			$payment_freq=$this->request->data['Paymentfequency'];
+			$sql.=" And requirement_vacancy.payment_freq='$payment_freq'";
+	}
+
+
+	if(!empty($this->request->data['eventtype'])){
+
+	
+
+			$eventtype=$this->request->data['eventtype'];
+		    $sql.=" And requirement.event_type='$eventtype'"; 
+	}
+	if(!empty($this->request->data['country_id'])){
+
+		
+			$country_id=$this->request->data['country_id'];
+			$sql.=" And requirement.country_id='$country_id'";
+
+	}
+	if(!empty($this->request->data['state_id'])){
+
+		
+			$state_id=$this->request->data['state_id'];
+			$sql.=" And requirement.state_id='$state_id'";
+
+	}
+	if(!empty($this->request->data['city_id'])){
+
+		
+			$city_id=$this->request->data['city_id'];
+			$sql.=" And requirement.city_id='$city_id'";
+
+	}
+
+	if(!empty($this->request->data['latitude']) && $this->request->data['longitude']){
+	
+			$lat=$this->request->data['latitude'];
+			$log=$this->request->data['longitude'];
+			$sql.=" And requirement.latitude='$lat' And requirement.longitude='$log'";
+
+	}
+
+
+	if( !empty($this->request->data['role_id']) ){
+		
+			$role=$this->request->data['role_id'];
+			if($this->request->data['role_id']!=0){
+				$sql.=" And users.role_id='$role'";
+			}
+			
+			
+
+	}
+	
+
+	if( !empty($this->request->data['recname']) ){
+		
+			$recname=$this->request->data['recname'];
+			 $sql.=" And users.user_name LIKE'%$recname%'";
+		
+			
+
+	}
+
+
+	if( !empty($this->request->data['time']) ){
+		
+			$recname=$this->request->data['time'];
+			 $sql.=" And requirement.time='$recname'";
+		
+			
+
+	}
+
+	if( !empty($this->request->data['event_from_date']) ){
+		
+			 $event_from_date=date("Y-m-d H:s:i",strtotime($this->request->data['event_from_date']));
+			 $sql.=" And requirement.event_from_date>='$event_from_date'";
+		
+			
+
+	}
+
+
+	if( !empty($this->request->data['event_to_date']) ){
+		
+			$event_to_date=date("Y-m-d H:s:i",strtotime($this->request->data['event_to_date']));
+			 $sql.=" And requirement.event_to_date<='$event_to_date'";
+		
+			
+
+	}
+
+
+	if( !empty($this->request->data['talent_required_fromdate']) ){
+		
+			$talent_required_fromdate=date("Y-m-d H:s:i",strtotime($this->request->data['talent_required_fromdate']));
+			 $sql.=" And requirement.talent_required_fromdate>='$talent_required_fromdate'";
+		
+			
+
+	}
+
+
+	if( !empty($this->request->data['talent_required_todate']) ){
+
+		
+			$talent_required_todate=date( "Y-m-d H:s:i",strtotime($this->request->data['talent_required_todate'] ));
+			 $sql.=" And requirement.talent_required_todate<='$talent_required_todate'";
+		
+			
+
+	}
+
+
+
+
+if($this->request->data['unit']!='' && $this->request->data['within']!='') {
+
+	if( !empty($this->request->data['within'] && empty($this->request->data['skill'])) ){
+
+			
+			
+		$within=$this->request->data['within'];	
+		
+			
+		$have.="having cdistance <= '$within'";
+			
+
+	}else{
+
+
+	$have.="having skill Like '%$skill%' and cdistance <= '$within' ";
+
+
+
+
+	}
+
+}
+
+
+
+
+}	
+  //pr($this->request->data);
+$sql.="Group by requirement.id ".$have."order by order_num, requirement.user_id asc";  
+  //pr($this->request->data); die;
+
+		$con = ConnectionManager::get('default');
+		$searchdata = $con->execute($sql)->fetchAll('assoc');
+		//pr($searchdata); 
+
+
+		 $currencyarray=array();
+		 $payemntfaq=array();
+		 $talentype=array();
+		 $eventtype=array();
+		 foreach($searchdata as $value){
+		 if($date<$value['last_date_app']) {
+		
+		 $eventtype[$value['event_type']]=$value['eventname'];
+		  $details = $this->Requirement->find('all')->contain(['RequirmentVacancy'=>['Skill','Currency','Paymentfequency'],'Country','State','City','Users','Jobquestion'=>['Questionmare_options_type','Jobanswer']])->where(['Requirement.id'=>$value['id']])->first();
+		   
+			    foreach($details['requirment_vacancy'] as $value){
+ //pr($value);
+		 
+		 $currencyarray[$value['currency']['id']]=$value['currency']['name'];
+		
+		 $payemntfaq[$value['paymentfequency']['id']]=$value['paymentfequency']['name'];
+		 $talentype[$value['skill']['id']]=$value['skill']['name'];
+		 
+		}
+		 		
+}
+		 }
+
+		 
+		
+		 $this->set('currencyarray', array_filter($currencyarray));
+		 $this->set('payemntfaq',array_filter( $payemntfaq));
+		 $this->set('talentype', array_filter($talentype));
+		 $this->set('searchdata', array_filter($searchdata));
+		 $this->set('eventtype',array_filter( array_unique($eventtype)));
+		 
+
+
+
+
+
+
+}
+	
+	
+
+	  
+		
+
+}
+
+
+public function jobrefine(){
+	$this->loadModel('Requirement');
+
+		
+if ($this->request->is(['post', 'put'])){
+
+
+	 $this->request->session()->write('Refinejobfilter',$this->request->data);
+	// $this->request->session()->write('advanceRefinejobfilter',$this->request->data);
+	
+$user_id=$this->request->session()->read('Auth.User.id');
+$salary=explode("-",$this->request->data['salaryrange']);
+$min=$salary['0'];
+$max=$salary['1'];
+
+	$title=$this->request->data['keyword'];
+	$date=date('Y-m-d H:i:s');
+
+
+ 	$sql="SELECT requirement.id, requirement.user_id,requirement.last_date_app,requirement.event_type,eventtypes.name as eventname,requirement_vacancy.payment_amount,currencys.name as currencysname,payment_fequency.name as payment_feqname,skill_type.name as skillname,requirement.image as image,requirement.title as title,currencys.id as currencyid,payment_fequency.id as pfqid,skill_type.id as skillid, (SELECT subscriptions.package_id FROM subscriptions
+WHERE subscriptions.package_type='PR' and subscriptions.user_id=requirement.user_id) as p_package, (Select subscriptions.package_id FROM subscriptions
+WHERE subscriptions.package_type='RC' and subscriptions.user_id=requirement.user_id) as r_package, (SELECT visibility_matrix.ordernumber FROM `visibility_matrix` where visibility_matrix.profilepack_id=p_package and visibility_matrix.recruiter_id=r_package) as order_num   FROM `requirement` LEFT JOIN requirement_vacancy ON requirement.id = requirement_vacancy.requirement_id LEFT JOIN eventtypes ON requirement.event_type = eventtypes.id  LEFT JOIN skill_type ON requirement_vacancy.telent_type = skill_type.id LEFT JOIN currencys ON requirement_vacancy.payment_currency = currencys.id LEFT JOIN payment_fequency ON requirement_vacancy.payment_freq = payment_fequency.id  where  requirement.last_date_app > '$date' and requirement.user_id !='$user_id' and requirement_vacancy.payment_amount>='$min' and requirement_vacancy.payment_amount <= '$max' "; 
+
+if(!empty($this->request->data['keyword']) ){
+		
+			 $title=$this->request->data['keyword'];
+			$sql.=" And `title` Like '%$title%' or talent_requirement_description Like '%$title%' or location Like '%$title%' or skill_type.name Like '%$title%'";
+			
+		
+		
+	}
+
+
+	if(!empty($this->request->data['currency']) && $this->request->data['currency']!=0){
+		
+			$currency=$this->request->data['currency'];
+			$sql.=" And requirement_vacancy.payment_currency='$currency'";
+		
+	}
+
+	if(!empty($this->request->data['payment']) && $this->request->data['payment']!=0){
+	
+			$payment=$this->request->data['payment'];
+			$sql.=" And requirement_vacancy.payment_freq='$payment'";
+
+	}
+	if(!empty($this->request->data['location'])){
+
+
+			$loc=$this->request->data['location'];
+			$this->set('loc',$loc);
+			$sql.=" And requirement.location like '%$loc%'";
+	}
+	if(!empty($this->request->data['telenttype']) && $this->request->data['telenttype']!=0){
+
+			
+
+			$telenttype=$this->request->data['telenttype'];
+		    $sql.=" And requirement_vacancy.telent_type='$telenttype'";
+	}
+
+	if(!empty($this->request->data['eventtype'])){
+
+	
+
+			$eventtype=$this->request->data['eventtype'];
+		    $sql.=" And requirement.event_type='$eventtype'"; 
+	}
+	if(!empty($this->request->data['time'])){
+
+		
+			$time=$this->request->data['time'];
+			$sql.=" And requirement.time='$time'";
+
+	}
+      $sql.="order by order_num, requirement.user_id asc";
+ 
+
+		$con = ConnectionManager::get('default');
+		$searchdata = $con->execute($sql)->fetchAll('assoc');
+
+
+		 $currencyarray=array();
+		 $payemntfaq=array();
+		 $talentype=array();
+		 $eventtype=array();
+		 foreach($searchdata as $value){
+		 
+		   
+		 	
+
+		 $eventtype[$value['event_type']]=$value['eventname'];
+		 	
+
+				$currencyarray[$value['currencyid']]=$value['currencysname'];
+
+				$payemntfaq[$value['pfqid']]=$value['payment_feqname'];
+
+				$talentype[$value['skillid']]=$value['skillname'];
+
+		 		
+
+		 }
+	
+		 $this->set('currencyarray', $currencyarray);
+		 $this->set('payemntfaq', $payemntfaq);
+		 $this->set('talentype', $talentype);
+		 $this->set('searchdata', $searchdata);
+		 $this->set('eventtype', array_unique($eventtype));
+		 
+
+
+
+
+
+
+}
+
+	
+}
+
+	// This Function for show skills
+	public function skills($id = null)
+	{
+	    $this->loadModel('Users');
+	    $this->loadModel('Skillset');
+	    $this->loadModel('Skill');
+	    if ($id != null)
+	    {
+		$contentadminskillset = $this->Skillset->find('all')->contain(['Skill'])->where(['Skillset.user_id' => $id, 'Skillset.status' => 'Y'])->order(['Skillset.id' => 'DESC'])->toarray();
+	    }
+	    $Skill = $this->Skill->find('all')->select(['id', 'name'])->where(['Skill.status' => 'Y'])->toarray();
+	    $this->set('Skill', $Skill);
+	    $this->set('skillset', $contentadminskillset);
+	    
+	    
+	    	if(!empty($this->request->data['skill']) && $this->request->data['skill']!=0){
+		
+			$skill=$this->request->data['skill'];
+			$skillarray=explode(",",$skill);
+			//print_r($skillarray);  die;
+			
+			for($i=0;$i<count($skillarray);$i++){
+				//$skillvalue=$skillarray[$i];
+				if($i==0){
+			$skillcheck.="requirement_vacancy.telent_type like '$skillarray[$i]'";
+			    }else if($i==count($skillarray)-1){
+			    $skillcheck.=" or requirement_vacancy.telent_type like '$skillarray[$i]' and";
+			    }else{
+			     $skillcheck.=" or requirement_vacancy.telent_type like '$skillarray[$i]'";
+			    }
+			    
+			}
+			//$have.="having skill Like '%$skill%'";
+
+		
+	}else{
+		$skillcheck="";
+	}$this->loadModel('Packfeature');
+	    $user_id = $this->request->session()->read('Auth.User.id');
+	    $packfeature = $this->Packfeature->find('all')->where(['Packfeature.user_id'=>$user_id])->order(['Packfeature.id' => 'ASC'])->first();
+	    $this->set('total_elegible_skills', $packfeature['number_categories']);
+	}
+
+
+public function applymultiple(){
+
+$this->loadModel('Requirement');
+$this->loadModel('Packfeature');
+if ($this->request->is(['post', 'put'])){
+	//pr($this->request->data);
+$user_id = $this->request->session()->read('Auth.User.id');
+;
+
+$packfeature = $this->Packfeature->find('all')->where(['Packfeature.user_id'=>$user_id])->order(['Packfeature.id' => 'ASC'])->first();
+$applycount=$packfeature['number_of_quote_daily']+$packfeature['number_job_application_month']+$packfeature['number_job_application_daily'];
+$a=$this->request->data['a'];
+$jobarray['job'][$a]=$this->request->data['jobsearch'];
+
+	if($applycount<$a+1){
+			echo "show";
+				die;
+}else{
+	
+			
+	$id=$this->request->data['jobsearch'];
+			try {
+		$details = $this->Requirement->find('all')->contain(['RequirmentVacancy'=>['Skill','Currency'],'Country','State','City','Users','Jobquestion'=>['Questionmare_options_type','Jobanswer']])->where(['Requirement.id'=>$id])->first();
+		$this->set('requirement_data',$details);
+
+	
+		$this->set('id',$id);
+		$this->set('a',$a);
+	    }
+	    catch (FatalErrorException $e) {
+		$this->log("Error Occured", 'error');
+	    }
+
+
+		}
+	
+	
+	}
+
+
+
+
+
+	}
+
+
+	public function sendquotemultiple(){
+
+$this->loadModel('Requirement');
+$this->loadModel('Packfeature');
+if ($this->request->is(['post', 'put'])){
+	//pr($this->request->data);
+$user_id = $this->request->session()->read('Auth.User.id');
+;
+
+$packfeature = $this->Packfeature->find('all')->where(['Packfeature.user_id'=>$user_id])->order(['Packfeature.id' => 'ASC'])->first();
+$applycount=$packfeature['number_of_free_quotes'];
+$a=$this->request->data['a'];
+$jobarray['job'][$a]=$this->request->data['jobsearch'];
+
+	if($applycount<$a+1){
+			echo "show";
+				die;
+}else{
+	
+			
+	$id=$this->request->data['jobsearch'];
+			try {
+		$details = $this->Requirement->find('all')->contain(['RequirmentVacancy'=>['Skill','Currency'],'Country','State','City','Users','Jobquestion'=>['Questionmare_options_type','Jobanswer']])->where(['Requirement.id'=>$id])->first();
+		$this->set('requirement_data',$details);
+
+	
+		$this->set('id',$id);
+		$this->set('a',$a);
+	    }
+	    catch (FatalErrorException $e) {
+		$this->log("Error Occured", 'error');
+	    }
+
+
+		}
+	
+	
+	}
+
+
+
+
+
+	}
+
+
+// Profile Refine 
+public function Profilerefine(){
+
+	$this->loadModel('Requirement');
+	if ($this->request->is(['post', 'put'])){
+	// pr($this->request->data);
+
+$this->request->session()->write('Profilerefinedata',$this->request->data); 
+
+		
+		$user_id=$this->request->session()->read('Auth.User.id');
+
+
+
+	   $sql="SELECT personal_profile.name, personal_profile.profile_image,personal_profile.gender,personal_profile.user_id,personal_profile.dob as dateofbirth,Round(TIMESTAMPDIFF(Day, personal_profile.dob, now() )/365)  as birthyear,personal_profile.gender,personal_profile.ethnicity,users.last_login,users.id,reviews.avgrating,personal_profile.ethnicity,enthicity.title,personal_profile.current_location,professinal_info.performing_year,count(*) as cont FROM `personal_profile` LEFT JOIN users ON personal_profile.user_id = users.id LEFT JOIN performance_language ON users.id = performance_language.user_id  LEFT JOIN languageknown ON users.id = languageknown.user_id LEFT JOIN performance_desc2 ON users.id = performance_desc2.user_id LEFT JOIN professinal_info ON users.id = professinal_info.user_id LEFT JOIN uservital ON users.id = uservital.user_id LEFT JOIN vques ON uservital.vs_question_id = vques.id LEFT JOIN voption ON uservital.option_value_id = voption.id  LEFT JOIN skill ON users.id = skill.user_id LEFT JOIN reviews ON users.id = reviews.artist_id LEFT JOIN enthicity ON personal_profile.ethnicity = enthicity.id  Where users.id!='$user_id'";
+
+	  if(!empty($this->request->data['name']) ){
+
+		$name=$this->request->data['name'];
+		$this->set('title',$name);
+	$sql.=" And personal_profile.name LIKE '%$name%'";
+
+	}
+
+	if(!empty($this->request->data['gender']) && $this->request->data['gender']!='0'){
+
+	$gen=$this->request->data['gender'];
+	$sql.=" And personal_profile.gender='$gen'";
+
+	}
+
+	
+
+
+	if(!empty($this->request->data['performancelan'])  && $this->request->data['performancelan']!='0'){
+	$performancelan=$this->request->data['performancelan'];
+	$sql.=" And performance_language.language_id ='$performancelan'";
+	}
+
+	if(!empty($this->request->data['language']) && $this->request->data['language']!=0){
+		$language=$this->request->data['language'];
+		$sql.=" And languageknown.language_id='$language'";
+	}
+
+	if(!empty($this->request->data['paymentfaq']) && $this->request->data['paymentfaq']!=0){
+
+		$paymentfaq=$this->request->data['paymentfaq'];
+		$sql.=" And performance_desc2.payment_frequency='$paymentfaq'"; 
+	}
+
+	if(!empty($this->request->data['skill']) && $this->request->data['skill']!=0){
+
+		$skill=$this->request->data['skill'];
+		$sql.=" And skill.skill_id='$skill'"; 
+	}
+
+	if(!empty($this->request->data['ethnicity']) && $this->request->data['ethnicity']!=0){
+
+		$ethnicity=$this->request->data['ethnicity'];
+		$sql.=" And personal_profile.ethnicity='$ethnicity'"; 
+	}
+
+	if($this->request->data['online']!=0){
+$time=logintime;
+		$online=$this->request->data['online'];
+		if($this->request->data['online']==1){
+			
+		$sql.=" And TIMESTAMPDIFF(MINUTE,users.last_login,NOW()) < '$time'"; 
+		}else{
+			$sql.="And TIMESTAMPDIFF(MINUTE,users.last_login,NOW()) >'$time'"; 
+		}
+	}
+
+
+	if(!empty($this->request->data['activein']) && $this->request->data['activein']!=0){
+
+		$days=$this->request->data['activein'];
+		$sql.=" And TIMESTAMPDIFF(DAY,users.last_login,NOW()) < '$days'"; 
+	}
+	
+	if(!empty($this->request->data['workingstyle']) ){
+
+		$workingstyle=$this->request->data['workingstyle'];
+		$sql.=" And professinal_info.areyoua='$workingstyle'"; 
+	}
+
+	if(!empty($this->request->data['r3']) ){
+
+		$r3=$this->request->data['r3'];
+		$sql.=" And reviews.avgrating='$r3'"; 
+	}
+		$count=0;
+		for($i=0;$i<count($this->request->data['vitalstats']);$i++){
+
+			if($this->request->data['vitalstats'][$i]!=0){
+
+				$option[]=$this->request->data['vitalstats'][$i];
+				$count++;
+					
+			}
+			
+		}
+
+		if(!empty($this->request->data['age']) && $this->request->data['age']!='0' ){
+			if($count>0){
+	$year=$this->request->data['age'];
+		$having="having birthyear='$year' and count(*) = '$count'";
+	}else{
+		$year=$this->request->data['age'];
+		$having="having birthyear='$year'";
+	}
+
+	}else{
+		if($count>0){
+		$having="having  count(*) = cont";
+		}
+	}
+		
+if($count>0){		
+$sql.=" and option_value_id in(".implode(",",$option).")";
+}
+	
+        echo $sql.=" group by users.id ".$having." order by personal_profile.id asc";
+	
+
+	$con = ConnectionManager::get('default');
+	$searchdata = $con->execute($sql)->fetchAll('assoc');
+
+
+
+$this->set('searchdata',$searchdata);
+$this->set('querytionarray',$querytionarray);
+
+
+
+
+
+	}
+
+		
+}
+
+
+public function advanceprofilesearchpost(){
+
+	$this->loadModel('Requirement');
+
+if ($this->request->is(['post', 'put'])){
+
+
+	if($this->request->data['latitude']){
+				$loc_lat=$this->request->data['latitude'];
+				}else{
+				$loc_lat="";
+				}
+
+				if($this->request->data['longitude']){
+				$loc_long=$this->request->data['longitude'];
+
+				}else{
+				$loc_long="";
+
+				}
+				if($this->request->data['unit']="km"){
+				$kmmile="3956";
+
+				}else{
+				$kmmile="6371";
+
+				}
+
+$user_id=$this->request->session()->read('Auth.User.id');
+
+
+$year =date('Y');
+
+ $sql="SELECT GROUP_CONCAT(skill.skill_id) as skill, 1.609344 * '".$kmmile."' * acos( cos( radians('".$loc_lat."') ) * cos( radians(personal_profile.current_lat) ) * cos( radians(personal_profile.current_long) - radians('".$loc_long."') ) + sin( radians('".$loc_lat."') ) * sin( radians(personal_profile.current_lat) ) ) AS cdistance, personal_profile.name, personal_profile.profile_image,personal_profile.gender,personal_profile.user_id,personal_profile.dob as dateofbirth,Round(TIMESTAMPDIFF(Day, personal_profile.dob, now() )/365)  as birthyear,personal_profile.gender,personal_profile.ethnicity,users.last_login,users.id,reviews.avgrating,personal_profile.ethnicity,enthicity.title,personal_profile.current_location,professinal_info.performing_year,('$year'-professinal_info.performing_year) as yearexpe FROM `personal_profile` LEFT JOIN users ON personal_profile.user_id = users.id LEFT JOIN performance_language ON users.id = performance_language.user_id  LEFT JOIN languageknown ON users.id = languageknown.user_id LEFT JOIN performance_desc2 ON users.id = performance_desc2.user_id LEFT JOIN professinal_info ON users.id = professinal_info.user_id   LEFT JOIN skill ON users.id = skill.user_id LEFT JOIN reviews ON users.id = reviews.artist_id LEFT JOIN prof_exprience ON users.id = prof_exprience.user_id LEFT JOIN current_working ON users.id = current_working.user_id  LEFT JOIN enthicity ON personal_profile.ethnicity = enthicity.id LEFT JOIN performance_desc ON performance_desc.user_id = users.id Where users.id!='$user_id'";
+
+
+
+			if(!empty($this->request->data['name']) ){
+
+				$name=$this->request->data['name'];
+				$this->set('title',$name);
+				$sql.=" And personal_profile.name LIKE '%$name%'";
+
+			}
+
+			if(!empty($this->request->data['profiletitle']) ){
+
+				$profiletitle=$this->request->data['profiletitle'];
+				$this->set('title',$name);
+				$sql.=" And professinal_info.profile_title LIKE '%$profiletitle%'";
+
+			}
+
+			if(!empty($this->request->data['wordsearch']) ){
+
+				$wordsearch=$this->request->data['wordsearch'];
+				$this->set('title',$name);
+				$sql.=" And prof_exprience.description LIKE '%$wordsearch%' or  prof_exprience.location LIKE '%$wordsearch%' or current_working.description LIKE '%$wordsearch%'or current_working.location LIKE '%$wordsearch%' or performance_desc.description LIKE '%$wordsearch%'";
+
+			}
+			if(!empty($this->request->data['skill']) ){
+
+				$skill=$this->request->data['skill'];
+				$this->set('title',$name);
+				$have.="having skill Like '%$skill%'";
+
+			}
+
+			if(!empty($this->request->data['positionname']) ){
+
+				$positionname=$this->request->data['positionname'];
+				$this->set('title',$name);
+				$sql.=" And prof_exprience.role LIKE '%$positionname%' or current_working.role LIKE '%$positionname%'";
+
+			}
+
+			if(!empty($this->request->data['gender']) ){
+
+				$gender=$this->request->data['gender'];
+				$sql.=" And personal_profile.gender ='$gender'";
+
+			}
+			if(!empty($this->request->data['country_id']) ){
+
+				$country_id=$this->request->data['country_id'];
+				$sql.=" And personal_profile.country_ids ='$country_id'";
+
+			}
+			if(!empty($this->request->data['state_id']) ){
+
+				$state_id=$this->request->data['state_id'];
+				$sql.=" And personal_profile.state_id ='$state_id'";
+
+			}
+
+if(!empty($this->request->data['city_id']) ){
+
+				$city_id=$this->request->data['city_id'];
+				$sql.=" And personal_profile.city_id ='$city_id'";
+
+			}
+
+		
+
+			if(!empty($this->request->data['clocation']) ){
+
+				$clocation=$this->request->data['clocation'];
+				$sql.=" And personal_profile.current_location ='$clocation'";
+
+			}
+
+			if(!empty($this->request->data['clocation']) ){
+
+				$clocation=$this->request->data['clocation'];
+				$sql.=" And personal_profile.current_location ='$clocation'";
+
+			}
+
+			if($this->request->data['experyear']!=0) {
+					$year=$this->request->data['experyear'];
+				if(!empty($this->request->data['skill']) ){
+
+				$skill=$this->request->data['skill'];
+				$this->set('title',$name);
+				$have.=" and yearexpe='$year'";
+
+				}else{
+					$have.="having yearexpe='$year'";
+				}
+				
+				
+			
+			}
+
+			if(!empty($this->request->data['within']) ){
+
+					$within=$this->request->data['within'];
+				if(!empty($this->request->data['skill']) ){
+
+				$skill=$this->request->data['skill'];
+				$this->set('title',$name);
+				//$have.=" and cdistance <='$within'";
+
+				}if($this->request->data['experyear']!=0) {
+
+				
+				$have.=" and cdistance <='$within'";
+
+				}else{
+					$have.="having cdistance <='$within'";
+				}
+
+			}
+
+
+
+
+
+
+
+	
+$sql.=" group by users.id ".$have." order by personal_profile.id asc";
+	 
+
+
+
+
+$con = ConnectionManager::get('default');
+	$searchdata = $con->execute($sql)->fetchAll('assoc');
+
+
+
+$this->set('searchdata',$searchdata);
+
+	
+
+}
+
+}
+public function savejobs(){
+$this->loadModel('Savejobs');
+if ($this->request->is(['post', 'put'])){
+$jobid=$this->request->data['jobid'];
+$savejob=$this->Savejobs->find('all')->where(['Savejobs.job_id'=>$jobid])->first();
+if(empty($savejob)){
+
+		$Savejobsenty = $this->Savejobs->newEntity();
+		$this->request->data['user_id']=$this->request->session()->read('Auth.User.id');
+		$this->request->data['job_id']=$jobid;
+		$savejobdata = $this->Savejobs->patchEntity($Savejobsenty, $this->request->data);
+		$savedjob = $this->Savejobs->save($savejobdata);
+		$response=array();
+		if($savedjob){
+
+			$response['success']=1;
+		}
+
+}
+else{
+
+	$id=$savejob['id'];
+	$audio = $this->Savejobs->get($id);
+	$this->Savejobs->delete($audio);
+	$response['success']=2;
+}
+
+	echo json_encode($response); die;
+
+
+	}
+
+}
+
+public function savejobresult(){
+		$this->loadModel('Savejobs');
+			$user_id = $this->request->session()->read('Auth.User.id');
+		$Savejobsdata = $this->Savejobs->find('all')->contain(['Requirement'])->where(['Savejobs.user_id'=>$user_id])->order(['Savejobs.id' => 'ASC'])->toarray();
+		$this->set('searchdata',$Savejobsdata);
+
+}
+
+public function saveprofile(){
+$this->loadModel('Saveprofile');
+if ($this->request->is(['post', 'put'])){
+$jobid=$this->request->data['p_id'];
+$saveprfile=$this->Saveprofile->find('all')->where(['Saveprofile.p_id'=>$jobid])->first();
+if(empty($saveprfile)){
+
+		$Saveprofilesenty = $this->Saveprofile->newEntity();
+		$this->request->data['user_id']=$this->request->session()->read('Auth.User.id');
+		
+		$saveprofiledata = $this->Saveprofile->patchEntity($Saveprofilesenty, $this->request->data);
+		$savedprofile = $this->Saveprofile->save($saveprofiledata);
+		$response=array();
+		if($savedprofile){
+
+			$response['success']=1;
+		}
+}
+else{
+	$id=$saveprfile['id'];
+	$audio = $this->Saveprofile->get($id);
+	$this->Saveprofile->delete($audio);
+	$response['success']=2;
+}
+	echo json_encode($response); die;
+
+
+	}
+
+}
+public function saveprofileresult(){
+		$this->loadModel('Saveprofile');
+			$user_id = $this->request->session()->read('Auth.User.id');
+		$Savejobsdata = $this->Saveprofile->find('all')->contain(['Profile'=>['Users'=>['Skillset'=>['Skill'],'Professinal_info']]])->where(['Saveprofile.user_id'=>$user_id])->order(['Saveprofile.id' => 'ASC'])->toarray();
+		$this->set('searchdata',$Savejobsdata);
+
+}
+
+
+public function savesearchresult(){
+
+	$this->loadModel('Savejobsearch');
+	if ($this->request->is(['post', 'put'])){
+
+	$Savejobsearch = $this->Savejobsearch->newEntity();
+	if($_SESSION['Refinejobfilter']){
+//pr($_SESSION['Refinejobfilter']);
+	$this->request->data['user_id']=$this->request->session()->read('Auth.User.id');
+	$this->request->data['currency']=$_SESSION['Refinejobfilter']['currency'];
+	$this->request->data['amount']=$_SESSION['Refinejobfilter']['salaryrange'];
+	$this->request->data['payment']=$_SESSION['Refinejobfilter']['payment'];
+	$this->request->data['telenttype']=$_SESSION['Refinejobfilter']['telenttype'];
+	$this->request->data['eventtype']=$_SESSION['Refinejobfilter']['eventtype'];
+	$this->request->data['time']=$_SESSION['Refinejobfilter']['time'];
+	$this->request->data['location']=$_SESSION['Refinejobfilter']['location'];
+	$this->request->data['keyword']=$_SESSION['Refinejobfilter']['keyword'];
+	$this->request->data['skill']=$_SESSION['Refinejobfilter']['skill'];
+	$this->request->data['title']=$_SESSION['Refinejobfilter']['title'];
+	$this->request->data['last_date_app']=$_SESSION['Refinejobfilter']['last_date_app'];
+	$this->request->data['last_date_appbefore']=$_SESSION['Refinejobfilter']['last_date_appbefore'];
+	$this->request->data['talent_required_todate']=$_SESSION['Refinejobfilter']['talent_required_todate'];
+	$this->request->data['talent_required_fromdate']=$_SESSION['Refinejobfilter']['talent_required_fromdate'];
+	$this->request->data['eventto']=$_SESSION['Refinejobfilter']['event_to_date'];
+	$this->request->data['eventfr']=$_SESSION['Refinejobfilter']['event_from_date'];
+	$this->request->data['recname']=$_SESSION['Refinejobfilter']['recname'];
+	$this->request->data['role_id']=$_SESSION['Refinejobfilter']['role_id'];
+	$this->request->data['unit']=$_SESSION['Refinejobfilter']['unit'];
+	$this->request->data['within']=$_SESSION['Refinejobfilter']['within'];
+	$this->request->data['longitude']=$_SESSION['Refinejobfilter']['longitude'];
+	$this->request->data['latitude']=$_SESSION['Refinejobfilter']['latitude'];
+	$this->request->data['location']=$_SESSION['Refinejobfilter']['location'];
+	$this->request->data['city']=$_SESSION['Refinejobfilter']['city_id'];
+	$this->request->data['state']=$_SESSION['Refinejobfilter']['state_id'];
+	$this->request->data['country_id']=$_SESSION['Refinejobfilter']['country_id'];
+	$this->request->data['gender']=$_SESSION['Refinejobfilter']['gender'];
+	$this->request->data['Paymentfequency']=$_SESSION['Refinejobfilter']['Paymentfequency'];
+	$this->request->data['unit']=$_SESSION['Refinejobfilter']['unit'];
+	$this->request->data['checkboxbefore']=$_SESSION['Refinejobfilter']['checkboxbefore'];
+	$this->request->data['checkboxbefore']=$_SESSION['Refinejobfilter']['checkboxafter'];
+	//pr($_SESSION['Refinejobfilter']);
+	//pr($this->request->data); 
+	$saveprofiledata = $this->Savejobsearch->patchEntity($Savejobsearch, $this->request->data);
+	$savedprofile = $this->Savejobsearch->save($saveprofiledata);
+	$response=array();
+		if($savedprofile){
+			$response['success']=1;
+				}
+	
+
+	}else{
+		$response['success']=0;
+	}
+echo json_encode($response); die;
+
+}
+	
+}
+
+public function refinejobshow(){
+$this->loadModel('Savejobsearch');
+$user_id = $this->request->session()->read('Auth.User.id');
+$Savejobsdata = $this->Savejobsearch->find('all')->where(['Savejobsearch.user_id'=>$user_id])->order(['Savejobsearch.id' => 'DESC'])->toarray();
+		$this->set('savedata',$Savejobsdata);
+}
+ public function deletesave($id)
+    {
+   $this->loadModel('Savejobsearch');
+                    $Requirement = $this->Savejobsearch->get($id);
+                  
+                    if ($this->Savejobsearch->delete($Requirement)) {
+                    $this->Flash->success(__('The Savejobsearch with id: {0} has been deleted.', h($id)));
+                    return $this->redirect(['action' => 'refinejobshow']);
+                    }
+    }
+
+
+
+public function viewrefinejobs( $id ){
+		$savejobarray=array();
+	$this->loadModel('Profile');
+	$this->loadModel('jrement');
+	$this->loadModel('Savejobs');
+	$this->loadModel('Savejobsearch');
+	$this->loadModel('JobApplication');
+
+		$user_id = $this->request->session()->read('Auth.User.id');
+		$Savejobsdata = $this->Savejobs->find('all')->where(['Savejobs.user_id'=>$user_id])->order(['Savejobs.id' => 'ASC'])->toarray();
+
+		$Savejobsdataviewfilter = $this->Savejobsearch->find('all')->where(['Savejobsearch.id'=>$id])->order(['Savejobsearch.id' => 'DESC'])->first()->toarray();
+
+	$bookjob = $this->JobApplication->find('all')->where(['user_id' =>$user_id])->toarray();
+
+$this->set('appliedjob',$bookjob);
+		foreach ($Savejobsdata as $key => $value) {
+		
+			$savejobarray[]=$value['job_id'];
+			
+		}
+
+		$this->set('savejobarray',$savejobarray);
+
+		$this->loadModel('Packfeature');
+	   
+	    $packfeature = $this->Packfeature->find('all')->where(['Packfeature.user_id'=>$user_id])->order(['Packfeature.id' => 'ASC'])->first();
+	    $this->set('number_job_application', $packfeature['number_job_application']);
+
+	
+	$type = 1;
+	$prr=array();
+
+	if($type==1){
+		$this->set('type',$type);
+
+		
+ $salary=explode("-",$Savejobsdataviewfilter['amount']);
+
+$min=$salary['0'];
+if($min){
+	$min=$min;
+}else{
+	$min=0;
+}
+
+$max=$salary['1'];
+if($max){
+	$max=$max;
+}else{
+	$max=50000;
+}
+
+$date=date('Y-m-d H:i:s');
+$user_id=$this->request->session()->read('Auth.User.id');
+
+	if(!empty($Savejobsdataviewfilter['skill']) ){
+		
+			$skill=$Savejobsdataviewfilter['skill'];
+			$skillarray=explode(",",$skill);
+			
+			for($i=0;$i<count($skillarray);$i++){
+				//$skillvalue=$skillarray[$i];
+
+			if(count($skillarray)==1){
+				 $skillcheck.="requirement_vacancy.telent_type like '$skillarray[$i]' and";
+				}
+				elseif($i==0){
+			$skillcheck.="requirement_vacancy.telent_type like '$skillarray[$i]'";
+			    }else if($i==count($skillarray)-1){
+			    $skillcheck.=" or requirement_vacancy.telent_type like '$skillarray[$i]' and";
+			    }else{
+			     $skillcheck.=" or requirement_vacancy.telent_type like '$skillarray[$i]'";
+			    }
+			    
+			}
+			//$have.="having skill Like '%$skill%'";
+
+		
+	}else{
+		$skillcheck="";
+	}
+
+	if($Savejobsdataviewfilter['latitude']){
+$loc_lat=$Savejobsdataviewfilter['latitude'];
+}else{
+$loc_lat="";
+}
+
+if($Savejobsdataviewfilter['longitude']){
+	$loc_long=$Savejobsdataviewfilter['longitude'];
+
+}else{
+	$loc_long="";
+	
+}
+if($Savejobsdataviewfilter['unit']="km"){
+	$kmmile="3956";
+
+}else{
+	$kmmile="6371";
+	
+}
+
+
+	if($this->request->data['checkboxafter']==1) {
+
+	if( !empty($this->request->data['last_date_app']) ){
+	
+			 $last_date_app=date("Y-m-d H:s:i",strtotime($this->request->data['last_date_app']));
+			 $lastdatecon="  requirement.last_date_app>='$last_date_app'";
+		
+			
+
+	}
+ }else{
+ 	$lastdateset=1;
+ 	//echo "Testing";
+ 	$lastdatecon="requirement.last_date_app>='$date'";
+
+ }	
+
+if($this->request->data['checkboxbefore']==2) {
+
+	if( !empty($this->request->data['last_date_appbefore']) ){
+		
+			 $last_date_app=date("Y-m-d H:s:i",strtotime($this->request->data['last_date_appbefore']));
+			 $lastdatecon="  requirement.last_date_app<='$last_date_app'";
+if($this->request->data['checkboxafter']==1) {
+
+			 $lastdatecon.=" and requirement.last_date_app<='$last_date_app'";
+		}
+			
+
+	}
+		
+
+}else{
+	if($this->request->data['checkboxafter']!=1) {
+		//echo "tes";
+		 	$lastdatecon="requirement.last_date_app>='$date'";
+
+	}
+}
+
+
+if($this->request->data['checkboxbefore']){
+	if($this->request->data['checkboxafter']){
+	//echo "Test";
+		$lastdatecon="requirement.last_date_app>='$date'";
+}}
+
+  $query="SELECT requirement.id, requirement.user_id,eventtypes.name,requirement.last_date_app,requirement.event_type,currencys.name as currencysname,requirement_vacancy.payment_amount,payment_fequency.name as payment_feqname,skill_type.name as skillname,requirement.image as image,requirement.title as title,currencys.id as currencyid,1.609344 * '".$kmmile."' * acos( cos( radians('".$loc_lat."') ) * cos( radians(requirement.latitude) ) * cos( radians(requirement.longitude) - radians('".$loc_long."') ) + sin( radians('".$loc_lat."') ) * sin( radians(requirement.latitude) ) ) AS cdistance,payment_fequency.id as pfqid,skill_type.id as skillid, (SELECT subscriptions.package_id FROM subscriptions
+WHERE subscriptions.package_type='PR' and subscriptions.user_id=requirement.user_id) as p_package, (Select subscriptions.package_id FROM subscriptions
+WHERE subscriptions.package_type='RC' and subscriptions.user_id=requirement.user_id) as r_package, (SELECT visibility_matrix.ordernumber FROM `visibility_matrix` where visibility_matrix.profilepack_id=p_package and visibility_matrix.recruiter_id=r_package) as order_num   FROM `requirement` LEFT JOIN requirement_vacancy ON requirement.id = requirement_vacancy.requirement_id  LEFT JOIN skill_type ON requirement_vacancy.telent_type = skill_type.id  LEFT JOIN eventtypes ON requirement.event_type = eventtypes.id LEFT JOIN currencys ON requirement_vacancy.payment_currency = currencys.id LEFT JOIN payment_fequency ON requirement_vacancy.payment_freq = payment_fequency.id LEFT JOIN users ON requirement.user_id = users.id  where $skillcheck $lastdatecon and requirement.user_id != '$user_id' and  requirement_vacancy.payment_amount>='$min' and requirement_vacancy.payment_amount <= '$max' ";
+
+	//pr($Savejobsdataviewfilter);
+
+	if($Savejobsdataviewfilter['savewhere']==1){
+	if(!empty($Savejobsdataviewfilter['keyword']) ){
+		
+			 $title=$Savejobsdataviewfilter['keyword'];
+			//$query.=" And `title` Like '%$title%'";
+			$query.=" and title Like '%$title%' or talent_requirement_description Like '%$title%' or location Like '%$title%' or skill_type.name Like '%$title%' ";
+		
+	}
+}else{
+		if(!empty($Savejobsdataviewfilter['title']) ){
+		
+			 $title=$Savejobsdataviewfilter['title'];
+			//$query.=" And `title` Like '%$title%'";
+			$query.=" And requirement.title Like '%$title%'  or talent_requirement_description Like '%$title%'  or skill_type.name Like '%$title%' ";
+	
+		
+	}
+
+}
+
+
+	if(!empty($Savejobsdataviewfilter['currency']) ){
+		
+			 
+			$currency=$Savejobsdataviewfilter['currency'];
+			$query.=" And requirement_vacancy.payment_currency='$currency'";
+		
+	}
+	if(!empty($Savejobsdataviewfilter['payment']) && $Savejobsdataviewfilter['payment']!=0){
+	
+			$payment=$Savejobsdataviewfilter['payment'];
+			$query.=" And requirement_vacancy.payment_freq='$payment'";
+
+	}
+	if(!empty($Savejobsdataviewfilter['telenttype']) && $Savejobsdataviewfilter['telenttype']!=0){
+
+			
+
+			$telenttype=$Savejobsdataviewfilter['telenttype'];
+		    $query.=" and requirement_vacancy.telent_type='$telenttype'";
+	}
+	if(!empty($Savejobsdataviewfilter['eventtype'])){
+
+	
+
+			$eventtype=$Savejobsdataviewfilter['eventtype'];
+		    $query.=" and requirement.event_type='$eventtype'"; 
+	}
+	if(!empty($Savejobsdataviewfilter['time'])){
+
+		
+			$time=$Savejobsdataviewfilter['time'];
+			$query.=" and requirement.time='$time'";
+
+	}
+	if(!empty($Savejobsdataviewfilter['role_id'])){
+
+		
+			$role_id=$Savejobsdataviewfilter['role_id'];
+			$query.=" and users.role_id='$role_id'";
+
+	}
+	if(!empty($Savejobsdataviewfilter['Paymentfequency'])){
+
+		
+			$Paymentfequency=$Savejobsdataviewfilter['Paymentfequency'];
+			$query.="And requirement_vacancy.payment_freq='$Paymentfequency'";
+
+
+	}
+	if(!empty($Savejobsdataviewfilter['gender'])){
+
+$gender=$Savejobsdataviewfilter['gender'];
+			if($gender!="a"){
+			$query.=" And requirement_vacancy.sex='$gender'";
+			}
+
+	}
+
+		if(!empty($Savejobsdataviewfilter['country_id'])){
+
+		
+			$country_id=$Savejobsdataviewfilter['country_id'];
+			$query.=" And requirement.country_id='$country_id'";
+
+	}
+	if(!empty($Savejobsdataviewfilter['state'])){
+
+		
+			$state_id=$Savejobsdataviewfilter['state'];
+			$query.=" And requirement.state_id='$state_id'";
+
+	}
+	if(!empty($Savejobsdataviewfilter['city'])){
+
+		
+			$city_id=$Savejobsdataviewfilter['city'];
+			$query.=" And requirement.city_id='$city_id'";
+
+	}
+
+	if(!empty($Savejobsdataviewfilter['latitude']) && $Savejobsdataviewfilter['longitude']){
+	
+			$lat=$Savejobsdataviewfilter['latitude'];
+			$log=$Savejobsdataviewfilter['longitude'];
+			$query.=" And requirement.latitude='$lat' And requirement.longitude='$log'";
+
+	}
+
+
+	if( !empty($Savejobsdataviewfilter['recname']) ){
+		
+			$recname=$Savejobsdataviewfilter['recname'];
+			 $query.=" And users.user_name LIKE'%$recname%'";
+		
+			
+
+	}
+
+	if( !empty($Savejobsdataviewfilter['eventfr']) ){
+		
+			 $event_from_date=date("Y-m-d H:s:i",strtotime($Savejobsdataviewfilter['eventfr']));
+			 $query.=" And requirement.event_from_date>='$event_from_date'";
+		
+			
+
+	}
+
+
+	if( !empty($Savejobsdataviewfilter['eventto']) ){
+		
+			$event_to_date=date("Y-m-d H:s:i",strtotime($Savejobsdataviewfilter['eventto']));
+			 $query.=" And requirement.event_to_date<='$event_to_date'";
+		
+			
+
+	}
+
+	if( !empty($Savejobsdataviewfilter['talent_required_fromdate']) ){
+		
+			$talent_required_fromdate=date("Y-m-d H:s:i",strtotime($Savejobsdataviewfilter['talent_required_fromdate']));
+			 $query.=" And requirement.talent_required_fromdate>='$talent_required_fromdate'";
+		
+			
+
+	}
+
+
+	if( !empty($Savejobsdataviewfilter['talent_required_todate']) ){
+
+		
+			$talent_required_todate=date( "Y-m-d H:s:i",strtotime($Savejobsdataviewfilter['talent_required_todate'] ));
+			 $query.=" And requirement.talent_required_todate<='$talent_required_todate'";
+		
+			
+
+	}
+
+if($Savejobsdataviewfilter['within']!='') {
+
+	
+
+			
+			
+		$within=$Savejobsdataviewfilter['within'];	
+		
+			
+		$have.="having cdistance <= '$within'";
+			
+
+
+}
+//pr($Savejobsdataviewfilter);
+
+   $query.="Group by requirement.id ".$have."order by order_num, requirement.user_id asc";
+
+
+		$con = ConnectionManager::get('default');
+		$searchdata = $con->execute($query)->fetchAll('assoc');
+
+	
+		//$this->dd($searchdata); die;
+$this->set('searchdata', $searchdata);
+
+	 $currencyarray=array();
+		 $payemntfaq=array();
+		 $talentype=array();
+		 $eventtype=array();
+		 foreach($searchdata as $value){
+		 	//pr($value);
+		
+
+		 $eventtype[$value['event_type']]=$value['name'];
+		 	
+
+				$currencyarray[$value['currencyid']]=$value['currencysname'];
+
+				$payemntfaq[$value['pfqid']]=$value['payment_feqname'];
+
+				$talentype[$value['skillid']]=$value['skillname'];
+
+		 		
+
+		 }
+		 
+		 
+//die;
+		 
+		 $this->set('title', $title);
+		 $this->set('currencyarray', $currencyarray);
+		 $this->set('payemntfaq', $payemntfaq);
+		 $this->set('talentype', $talentype);
+		 $this->set('eventtype', array_unique($eventtype));
+
+	}}
+
+
+
+
+
+
+public function advanceRefine(){
+
+
+if ($this->request->is(['post', 'put'])){
+	
+	
+$_SESSION['Refinejobfilter']=array_merge($_SESSION['Refinejobfilter'],$this->request->data);
+
+
+
+ $date=date('Y-m-d H:i:s');
+
+	if($_SESSION['Refinejobfilter']['latitude']){
+$loc_lat=$_SESSION['Refinejobfilter']['latitude'];
+}else{
+$loc_lat="";
+}
+
+if($_SESSION['Refinejobfilter']['longitude']){
+	$loc_long=$_SESSION['Refinejobfilter']['longitude'];
+
+}else{
+	$loc_long="";
+	
+}
+if($_SESSION['Refinejobfilter']['unit']="km"){
+	$kmmile="3956";
+
+}else{
+	$kmmile="6371";
+	
+}	
+		$salary=explode("-",$this->request->data['salaryrange']);
+
+		$min=$salary['0'];
+		if($min){
+		$min=$min;
+		}else{
+		$min=0;
+		}
+
+		$max=$salary['1'];
+		if($max){
+		$max=$max;
+		}else{
+		$max=500000;
+		}
+		$user_id=$this->request->session()->read('Auth.User.id');
+		
+	if(!empty($_SESSION['Refinejobfilter']['skill']) ){
+		
+			$skill=$_SESSION['Refinejobfilter']['skill'];
+			$skillarray=explode(",",$skill);
+			//print_r($skillarray);  die;
+			
+			
+			for($i=0;$i<count($skillarray);$i++){
+				//$skillvalue=$skillarray[$i];
+				
+				if(count($skillarray)==1){
+				 $skillcheck.="requirement_vacancy.telent_type like '$skillarray[$i]' and";
+				}
+				elseif($i==0){
+			$skillcheck.="requirement_vacancy.telent_type like '$skillarray[$i]'";
+			    }else if($i==count($skillarray)-1){
+			    $skillcheck.=" or requirement_vacancy.telent_type like '$skillarray[$i]' and";
+			    }else{
+			     $skillcheck.=" or requirement_vacancy.telent_type like '$skillarray[$i]'";
+			    }
+			    
+			}
+			
+			//$have.="having skill Like '%$skill%'";
+
+		
+	}else{
+		$skillcheck="";
+	}
+
+ $sql="SELECT GROUP_CONCAT(requirement_vacancy.telent_type) as skill ,eventtypes.name as eventname,requirement_vacancy.sex as sex,users.name , users.role_id, requirement.id, requirement.user_id,requirement.last_date_app,requirement.event_type,currencys.name as currencysname,payment_fequency.name as payment_feqname,skill_type.name as skillname,requirement.image as image,requirement.title as title,currencys.id as currencyid, 1.609344 * '".$kmmile."' * acos( cos( radians('".$loc_lat."') ) * cos( radians(requirement.latitude) ) * cos( radians(requirement.longitude) - radians('".$loc_long."') ) + sin( radians('".$loc_lat."') ) * sin( radians(requirement.latitude) ) ) AS cdistance,payment_fequency.id as pfqid,skill_type.id as skillid, (SELECT subscriptions.package_id FROM subscriptions
+		WHERE subscriptions.package_type='PR' and subscriptions.user_id=requirement.user_id) as p_package, (Select subscriptions.package_id  FROM subscriptions
+		WHERE subscriptions.package_type='RC' and subscriptions.user_id=requirement.user_id) as r_package, (SELECT visibility_matrix.ordernumber FROM `visibility_matrix` where visibility_matrix.profilepack_id=p_package and visibility_matrix.recruiter_id=r_package) as order_num   FROM  `requirement`  LEFT JOIN eventtypes ON requirement.event_type = eventtypes.id LEFT JOIN requirement_vacancy ON requirement.id = requirement_vacancy.requirement_id  LEFT JOIN skill_type ON requirement_vacancy.telent_type = skill_type.id  LEFT JOIN currencys ON requirement_vacancy.payment_currency = currencys.id LEFT JOIN payment_fequency ON requirement_vacancy.payment_freq = payment_fequency.id LEFT JOIN users ON requirement.user_id = users.id  where $skillcheck  requirement.last_date_app > '$date' and  requirement_vacancy.payment_amount>='$min' and requirement_vacancy.payment_amount <= '$max' and requirement.user_id !='$user_id'";
+		
+
+
+
+if($this->request->data['currency']){
+	$currnecy=$this->request->data['currency'];
+	$sql.=" And requirement_vacancy.payment_currency='$currnecy'";
+
+}
+
+
+if($this->request->data['payment']){
+	$payment=$this->request->data['payment'];
+	$sql.=" And requirement_vacancy.payment_freq='$payment'";
+
+}
+
+if($this->request->data['location']){
+	$location=$this->request->data['location'];
+	$sql.=" And requirement.location='$location'";
+
+}
+
+if($this->request->data['telenttype']){
+	$telenttype=$this->request->data['telenttype'];
+	$sql.=" And requirement_vacancy.telent_type='$telenttype'";
+
+}
+
+if($this->request->data['eventtype']){
+	$eventtype=$this->request->data['eventtype'];
+	$sql.=" And requirement.event_type='$eventtype'";
+
+}else{
+
+
+	if(!empty($_SESSION['Refinejobfilter']['eventtype'])){
+
+	
+
+			$eventtype=$_SESSION['Refinejobfilter']['eventtype'];
+		    $sql.=" And requirement.event_type='$eventtype'"; 
+	}
+
+
+}
+	if($this->request->data['time']){
+	$time=$this->request->data['time'];
+	$sql.=" And requirement.time='$time'";
+
+}
+	
+	if(!empty($_SESSION['Refinejobfilter']['title'])){
+	
+	$title=$_SESSION['Refinejobfilter']['title'];
+	$sql.=" And requirement.title Like '%$title%'  or talent_requirement_description Like '%$title%' or location Like '%$title%' or skill_type.name Like '%$title%' ";
+	
+	}
+
+
+
+	if(!empty($_SESSION['Refinejobfilter']['gender'])) {
+		
+	
+			$sex=$_SESSION['Refinejobfilter']['gender'];
+			if($sex!="a"){
+			$sql.=" And requirement_vacancy.sex='$sex'";
+			}
+	}
+	if(!empty($_SESSION['Refinejobfilter']['Paymentfequency'])){
+
+
+			$payment_freq=$_SESSION['Refinejobfilter']['Paymentfequency'];
+			$sql.=" And requirement_vacancy.payment_freq='$payment_freq'";
+	}
+
+
+	if(!empty($_SESSION['Refinejobfilter']['country_id'])){
+
+		
+			$country_id=$_SESSION['Refinejobfilter']['country_id'];
+			$sql.=" And requirement.time='$country_id'";
+
+	}
+	if(!empty($_SESSION['Refinejobfilter']['state_id'])){
+
+		
+			$state_id=$_SESSION['Refinejobfilter']['country_id'];
+			$sql.=" And requirement.time='$state_id'";
+
+	}
+	if(!empty($_SESSION['Refinejobfilter']['city_id'])){
+
+		
+			$city_id=$_SESSION['Refinejobfilter']['city_id'];
+			$sql.=" And requirement.time='$city_id'";
+
+	}
+
+	if(!empty($_SESSION['Refinejobfilter']['latitude']) && $_SESSION['Refinejobfilter']['longitude']){
+	
+			$lat=$_SESSION['Refinejobfilter']['latitude'];
+			$log=$_SESSION['Refinejobfilter']['longitude'];
+			$sql.=" And requirement.latitude='$lat' And requirement.longitude='$log'";
+
+	}
+
+
+	if( !empty($_SESSION['Refinejobfilter']['role_id']!=0) ){
+		
+			$role=$_SESSION['Refinejobfilter']['role_id'];
+			if($_SESSION['Refinejobfilter']['role_id']==2){
+				$sql.=" And users.role_id='$role'";
+			}else{
+				$sql.=" And users.role_id='1' or requirement.longitude='2'";
+			}
+			
+			
+
+	}
+
+	if( !empty($_SESSION['Refinejobfilter']['recname']) ){
+		
+			$recname=$_SESSION['Refinejobfilter']['recname'];
+			 $sql.=" And users.name='$recname'";
+		
+			
+
+	}
+
+
+	if( !empty($_SESSION['Refinejobfilter']['time']) ){
+		
+			$recname=$_SESSION['Refinejobfilter']['time'];
+			 $sql.=" And requirement.time='$recname'";
+		
+			
+
+	}
+
+	if( !empty($_SESSION['Refinejobfilter']['event_from_date']) ){
+		
+			$event_from_date=date("Y-m-d H:s:i",$this->request->data['event_from_date']);
+			 $sql.=" And requirement.event_from_date='$event_from_date'";
+		
+			
+
+	}
+
+
+	if( !empty($_SESSION['Refinejobfilter']['event_to_date']) ){
+		
+			$event_to_date=date("Y-m-d H:s:i",$_SESSION['Refinejobfilter']['event_to_date']);
+			 $sql.=" And requirement.event_to_date='$event_to_date'";
+		
+			
+
+	}
+
+
+	if( !empty($_SESSION['Refinejobfilter']['talent_required_fromdate']) ){
+		
+			$talent_required_fromdate=date("Y-m-d H:s:i",$_SESSION['Refinejobfilter']['talent_required_fromdate']);
+			 $sql.=" And requirement.talent_required_fromdate='$talent_required_fromdate'";
+		
+			
+
+	}
+
+
+	if( !empty($_SESSION['Refinejobfilter']['talent_required_todate']) ){
+		
+			$talent_required_todate=date( "Y-m-d H:s:i",$_SESSION['Refinejobfilter']['talent_required_todate'] );
+			 $sql.=" And requirement.talent_required_todate='$talent_required_todate'";
+		
+			
+
+	}
+
+
+	if($_SESSION['Refinejobfilter']['checkboxafter']==1) {
+
+	if( !empty($_SESSION['Refinejobfilter']['last_date_app']) ){
+		
+			$last_date_app=date("Y-m-d H:s:i",$_SESSION['Refinejobfilter']['last_date_app']);
+			 $sql.=" And requirement.last_date_app>='$last_date_app'";
+		
+			
+
+	}
+ }	
+
+if($_SESSION['Refinejobfilter']['checkboxbefore']==1) {
+
+	if( !empty($_SESSION['Refinejobfilter']['last_date_appbefore']) ){
+		
+			$last_date_app=date("Y-m-d H:s:i",$_SESSION['Refinejobfilter']['last_date_appbefore']);
+			 $sql.=" And requirement.last_date_app<='$talent_required_todate'";
+		
+			
+
+	}
+
+}
+
+if($_SESSION['Refinejobfilter']['unit']!='' && $_SESSION['Refinejobfilter']['within']!='') {
+
+	if( !empty($_SESSION['Refinejobfilter']['within'] && empty($_SESSION['Refinejobfilter']['skill'])) ){
+
+			
+			
+		$within=$_SESSION['Refinejobfilter']['within'];	
+		
+			
+		$have.="having cdistance <= '$within'";
+			
+
+	}else{
+
+
+	$have.="having skill Like '%$skill%' and cdistance <= '$within' ";
+
+
+
+
+	}
+
+}
+
+
+
+
+	
+    $sql.="Group by requirement.id ".$have."order by order_num, requirement.user_id asc";
+   
+
+		$con = ConnectionManager::get('default');
+		$searchdata = $con->execute($sql)->fetchAll('assoc');
+
+
+		 $currencyarray=array();
+		 $payemntfaq=array();
+		 $talentype=array();
+		 $eventtype=array();
+		 foreach($searchdata as $value){
+		
+		
+if($date<$value['last_date_app']) {
+		 $eventtype[]=$value['eventname'];
+		 $currencyarray[$value['currencyid']]=$value['currencysname'];
+		
+		 $payemntfaq[$value['pfqid']]=$value['payment_feqname'];
+		 $talentype[$value['skillid']]=$value['skillname'];
+
+		 		
+
+		 }
+		 }
+
+		 
+		
+		 $this->set('currencyarray', array_filter($currencyarray));
+		 $this->set('payemntfaq',array_filter( $payemntfaq));
+		 $this->set('talentype', array_filter($talentype));
+		 $this->set('searchdata', array_filter($searchdata));
+		 $this->set('eventtype',array_filter( array_unique($eventtype)));
+		 
+
+}
+
+
+
+
+
+}
+
+
+
+public function aplyjobmultiple(){
+
+	$this->loadModel('Packfeature');
+	$this->loadModel('Requirement');
+	$this->loadModel('JobApplication');
+
+if ($this->request->is(['post', 'put'])){
+
+
+if($this->request->data['buttonpresstype']==1){
+	$flag=0;
+
+$response=array();
+$user_id = $this->request->session()->read('Auth.User.id');
+$packfeature = $this->Packfeature->find('all')->where(['Packfeature.user_id'=>$user_id])->order(['Packfeature.id' => 'ASC'])->first();
+$applycount=$packfeature['number_job_application'];
+$packfeature_id = $packfeature['id'];
+
+        $number_jobday = $packfeature['number_job_application'];
+ $jobapplycount=count($this->request->data['job']);
+
+if($applycount<$jobapplycount){
+	$response['success']=0;
+			
+}else{
+	$id=$this->request->data['jobsearch'];
+//pr($this->request->data['job']);
+	foreach($this->request->data['job'] as $value){
+
+		$details = $this->Requirement->find('all')->contain(['RequirmentVacancy'=>['Skill','Currency'],'Country','State','City','Users','Jobquestion'=>['Questionmare_options_type','Jobanswer']])->where(['Requirement.id'=>$value])->first();
+		//pr($details);
+	
+	  $skill=count($details['requirment_vacancy']);
+			if($skill<=1){
+
+		}else{
+			$flag=1;
+		}
+	}
+	try {
+		foreach($this->request->data['job'] as $value){
+
+		$details = $this->Requirement->find('all')->contain(['RequirmentVacancy'=>['Skill','Currency'],'Country','State','City','Users','Jobquestion'=>['Questionmare_options_type','Jobanswer']])->where(['Requirement.id'=>$value])->first();
+	
+		$skill=count($details['requirment_vacancy']);
+
+		
+if($flag==0){
+	$this->request->data['user_id']=$this->request->session()->read('Auth.User.id');
+
+
+		$this->request->data['talent_accepted_status']="Y";
+		$this->request->data['job_id']=$details['id'];
+		$this->request->data['skill_id']=$details['requirment_vacancy']['0']['skill']['id'];
+	
+		 $JobApplication = $this->JobApplication->newEntity();
+	$JobApplicationdata = $this->JobApplication->patchEntity($JobApplication, $this->request->data);
+		if ($resu=$this->JobApplication->save($JobApplicationdata)) {
+		$packfeature = $this->Packfeature->get($packfeature_id);
+
+		$feature_info['number_job_application'] = $number_jobday-1;
+		$features_arr = $this->Packfeature->patchEntity($packfeature, $feature_info);
+		$this->Packfeature->save($features_arr);
+
+
+
+
+		}
+
+
+
+		$bookjob = $this->JobApplication->find('all')->order(['JobApplication.id' =>'DESC'])->first();
+		////pr($bookjob); 
+		//$response['job_id']=$bookjob['job_id'];
+		$Job[]=$value;
+		$response['success']=2;
+		//echo json_encode($response);
+		//die;
+
+		}else{
+
+$response['success']=1;
+
+		}
+
+	}
+	
+	    }
+	    catch (FatalErrorException $e) {
+		$this->log("Error Occured", 'error');
+	    }
+
+
+		}
+
+
+}else{
+	$response['success']=3;
+}
+
+
+
+	}
+	$response['jobarray']=$Job;
+	echo json_encode($response);
+die;
+
+}
+
+
+
+
+
+public function saveprosearchresult(){
+
+	$this->loadModel('Saveprofilesearch');
+	if ($this->request->is(['post', 'put'])){
+
+	$Saveprofilesearch = $this->Saveprofilesearch->newEntity();
+	if($_SESSION['Profilerefinedata']){
+
+	$this->request->data['user_id']=$this->request->session()->read('Auth.User.id');
+
+
+
+if($_SESSION['Profilerefinedata']['name']){
+	$this->request->data['keyword']=$_SESSION['Profilerefinedata']['name'];
+}else{
+	$this->request->data['keyword']=$this->request->data['name'];
+	}
+	$this->request->data['age']=$_SESSION['Profilerefinedata']['age'];
+	$this->request->data['gender']=$_SESSION['Profilerefinedata']['gender'];
+	$this->request->data['performancelan']=$_SESSION['Profilerefinedata']['performancelan'];
+	$this->request->data['online']=$_SESSION['Profilerefinedata']['online'];
+
+ $vitalcount=count($_SESSION['Profilerefinedata']['vitalstats']);
+$vital=array();
+	//pr($_SESSION['Profilerefinedata']);
+	for($i=0;$i<$vitalcount;$i++){
+
+if($_SESSION['Profilerefinedata']['vitalstats'][$i]!=0){
+	
+	$vital[]=$_SESSION['Profilerefinedata']['vitalstats'][$i] ;
+		 
+	}
+
+	}
+
+	//pr($vital);
+
+	$this->request->data['vitaloption']=implode(",",$vital);
+	$this->request->data['ProfileActive']=$_SESSION['Profilerefinedata']['activein'];
+	$this->request->data['Payment-Frequency']=$_SESSION['Profilerefinedata']['paymentfaq'];
+	$this->request->data['Talent-Type']=$_SESSION['Profilerefinedata']['skill'];
+	$this->request->data['Ethnicity']=$_SESSION['Profilerefinedata']['ethnicity'];
+	$this->request->data['Review-Rating']=$_SESSION['Profilerefinedata']['r3'];
+	$this->request->data['Working-Style']=$_SESSION['Profilerefinedata']['workingstyle'];
+	
+	//pr($this->request->data); die;
+	
+	$saveprofiledata = $this->Saveprofilesearch->patchEntity($Saveprofilesearch, $this->request->data);
+	$savedprofile = $this->Saveprofilesearch->save($saveprofiledata);
+
+	$response=array();
+		if($savedprofile){
+			$response['success']=1;
+				}
+	
+
+	}else{
+		$response['success']=0;
+	}
+echo json_encode($response); die;
+
+}
+	
+}
+
+
+
+// Profile Refine 
+public function viewProfilerefine($id){
+
+	$this->loadModel('Requirement');
+	if ($this->request->is(['post', 'put'])){
+	// pr($this->request->data);
+
+$this->request->session()->write('Profilerefinedata',$this->request->data); 
+
+		
+		$user_id=$this->request->session()->read('Auth.User.id');
+
+
+
+	   $sql="SELECT personal_profile.name, personal_profile.profile_image,personal_profile.gender,personal_profile.user_id,personal_profile.dob as dateofbirth,Round(TIMESTAMPDIFF(Day, personal_profile.dob, now() )/365)  as birthyear,personal_profile.gender,personal_profile.ethnicity,users.last_login,users.id,reviews.avgrating,personal_profile.ethnicity,enthicity.title,personal_profile.current_location,professinal_info.performing_year,count(*) as cont FROM `personal_profile` LEFT JOIN users ON personal_profile.user_id = users.id LEFT JOIN performance_language ON users.id = performance_language.user_id  LEFT JOIN languageknown ON users.id = languageknown.user_id LEFT JOIN performance_desc2 ON users.id = performance_desc2.user_id LEFT JOIN professinal_info ON users.id = professinal_info.user_id LEFT JOIN uservital ON users.id = uservital.user_id LEFT JOIN vques ON uservital.vs_question_id = vques.id LEFT JOIN voption ON uservital.option_value_id = voption.id  LEFT JOIN skill ON users.id = skill.user_id LEFT JOIN reviews ON users.id = reviews.artist_id LEFT JOIN enthicity ON personal_profile.ethnicity = enthicity.id  Where users.id!='$user_id'";
+
+	  if(!empty($this->request->data['name']) ){
+
+		$name=$this->request->data['name'];
+		$this->set('title',$name);
+	$sql.=" And personal_profile.name LIKE '%$name%'";
+
+	}
+
+	if(!empty($this->request->data['gender']) && $this->request->data['gender']!='0'){
+
+	$gen=$this->request->data['gender'];
+	$sql.=" And personal_profile.gender='$gen'";
+
+	}
+
+	
+
+
+	if(!empty($this->request->data['performancelan'])  && $this->request->data['performancelan']!='0'){
+	$performancelan=$this->request->data['performancelan'];
+	$sql.=" And performance_language.language_id ='$performancelan'";
+	}
+
+	if(!empty($this->request->data['language']) && $this->request->data['language']!=0){
+		$language=$this->request->data['language'];
+		$sql.=" And languageknown.language_id='$language'";
+	}
+
+	if(!empty($this->request->data['paymentfaq']) && $this->request->data['paymentfaq']!=0){
+
+		$paymentfaq=$this->request->data['paymentfaq'];
+		$sql.=" And performance_desc2.payment_frequency='$paymentfaq'"; 
+	}
+
+	if(!empty($this->request->data['skill']) && $this->request->data['skill']!=0){
+
+		$skill=$this->request->data['skill'];
+		$sql.=" And skill.skill_id='$skill'"; 
+	}
+
+	if(!empty($this->request->data['ethnicity']) && $this->request->data['ethnicity']!=0){
+
+		$ethnicity=$this->request->data['ethnicity'];
+		$sql.=" And personal_profile.ethnicity='$ethnicity'"; 
+	}
+
+	if($this->request->data['online']!=0){
+$time=logintime;
+		$online=$this->request->data['online'];
+		if($this->request->data['online']==1){
+			
+		$sql.=" And TIMESTAMPDIFF(MINUTE,users.last_login,NOW()) < '$time'"; 
+		}else{
+			$sql.="And TIMESTAMPDIFF(MINUTE,users.last_login,NOW()) >'$time'"; 
+		}
+	}
+
+
+	if(!empty($this->request->data['activein']) && $this->request->data['activein']!=0){
+
+		$days=$this->request->data['activein'];
+		$sql.=" And TIMESTAMPDIFF(DAY,users.last_login,NOW()) < '$days'"; 
+	}
+	
+	if(!empty($this->request->data['workingstyle']) ){
+
+		$workingstyle=$this->request->data['workingstyle'];
+		$sql.=" And professinal_info.areyoua='$workingstyle'"; 
+	}
+
+	if(!empty($this->request->data['r3']) ){
+
+		$r3=$this->request->data['r3'];
+		$sql.=" And reviews.avgrating='$r3'"; 
+	}
+		$count=0;
+		for($i=0;$i<count($this->request->data['vitalstats']);$i++){
+
+			if($this->request->data['vitalstats'][$i]!=0){
+
+				$option[]=$this->request->data['vitalstats'][$i];
+				$count++;
+					
+			}
+			
+		}
+
+		if(!empty($this->request->data['age']) && $this->request->data['age']!='0' ){
+			if($count>0){
+	$year=$this->request->data['age'];
+		$having="having birthyear='$year' and count(*) = '$count'";
+	}else{
+		$year=$this->request->data['age'];
+		$having="having birthyear='$year'";
+	}
+
+	}else{
+		if($count>0){
+		$having="having  count(*) = cont";
+		}
+	}
+		
+if($count>0){		
+$sql.=" and option_value_id in(".implode(",",$option).")";
+}
+	
+        echo $sql.=" group by users.id ".$having." order by personal_profile.id asc";
+	
+
+	$con = ConnectionManager::get('default');
+	$searchdata = $con->execute($sql)->fetchAll('assoc');
+
+
+
+$this->set('searchdata',$searchdata);
+$this->set('querytionarray',$querytionarray);
+
+
+
+
+
+	}
+
+		
+}
+
+
+public function viewRefine(){
+
+	$this->loadModel('Saveprofilesearch');
+$user_id = $this->request->session()->read('Auth.User.id');
+$Savejobsdata = $this->Saveprofilesearch->find('all')->select(['id','template','created'])->where(['Saveprofilesearch.user_id'=>$user_id])->order(['Saveprofilesearch.id' => 'DESC'])->toarray();
+		$this->set('savedata',$Savejobsdata);
+
+}
+
+
+public function pingjobs(){
+$this->loadModel('Requirement');
+		if ($this->request->is(['post', 'put'])){
+				
+				$requirementid=$this->request->data['jobid'];
+				$count=$this->request->data['count'];
+
+				$details = $this->Requirement->find('all')->contain(['RequirmentVacancy'=>['Skill','Currency'],'Country','State','City','Users','Jobquestion'=>['Questionmare_options_type','Jobanswer']])->where(['Requirement.id'=>$requirementid])->first();
+			
+$html="<label for='comment'>".$details['title']."</label>
+     <select class='form-control' name='skill".$count."'>";
+
+foreach($details['requirment_vacancy'] as $value){
+
+$html.='<option value='.$value["skill"]["id"].'>'.$value["skill"]["name"].'</option>';
+
+
+}
+
+        $html.='<input type="hidden" name="job_id'.$count.'" value='.$details['id'].'>';
+echo $html;
+die;
+		}
+}
+
+}
+
+
+
+
+

@@ -1,0 +1,20 @@
+<?php
+namespace App\Model\Table;
+use Cake\ORM\Table;
+use Cake\Validation\Validator;
+class VsquestionsTable extends Table {
+
+    public $name = 'Vsquestions';
+    public function initialize(array $config)
+        {
+                    $this->table('vs_questions');
+                    $this->primaryKey('id');
+                  
+                  
+                  
+                  
+                 
+    
+        }
+    }
+?>

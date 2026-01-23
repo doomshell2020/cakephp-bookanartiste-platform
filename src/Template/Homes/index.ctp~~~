@@ -1,0 +1,1362 @@
+
+<style type="text/css">
+	.featured-list-carousal.owl-carousel .owl-item {
+		min-height: 290px;
+	}
+	.featured-list-carousal.owl-carousel .owl-item img {
+		width: 100%;
+	}
+
+	.featured-list-carousal.owl-carousel .owl-item {
+		min-height: 290px;
+	}
+
+	.contact-detail-social-icon ul li a{
+		color: white;
+		font-size: 8px;
+	}
+
+	.contact-detail-social-icon ul li {
+		/* display: inline-block; */
+		position: relative;
+		padding-bottom: 0px;
+		float: left;
+	}
+
+	.contact-detail-social-icon ul li {
+		/* display: inline-block; */
+		position: relative;
+		padding-bottom: 0px;
+		float: left;
+	}
+
+	.jobshare-toggle ul li a i{
+		color: black;
+	} 
+
+</style> 
+
+<!----------------------slider-strt------------------------>
+<section id="slider">
+	<!--<div class="icon-scroll-social"> <a href="#" class="fa fa-facebook bg-face"></a> <a href="#" class="fa fa-twitter bg-twt"></a> <a href="#" class="fa fa-pinterest bg-pin"></a> <a href="#" class="fa fa-linkedin bg-link"></a> </div>-->
+
+	<div class="owl-carousel owl-theme owl-loaded slider">
+		<?php if(count($banner)>0){ ?>
+			<?php foreach($banner as $homebanner) { ?>
+				<div class="owl-item">
+					<div class="slide-caption2">
+            <?php if($homebanner['title']) {?>
+        <h1><?php echo $homebanner['title']; ?></h1>
+            <?php }else{?>
+              <h1><?php echo $sitesetting['banner_title']; ?></h1>
+            <?php } ?>
+					</div>
+					<a class="banner_anchor" href="<?php echo $homebanner['bannerurl']; ?>"><img src="<?php echo SITE_URL; ?>/bannerimages/<?php echo $homebanner['banner_image']; ?>" alt=""></a>
+				</div>
+			<?php  }  ?>
+
+
+		</div>
+		<div class="slide-caption">
+			<?php  }else{ //pr($default_banner); die;?>
+                <?php if($default_banner['banner_image']) {?>
+				<div class="owl-item"><img src="<?php echo SITE_URL; ?>/bannerimages/<?php echo $default_banner['banner_image']; ?>" alt=""></div>
+				<?php }else{ ?>
+					<div class="owl-item"><img src="images/slide-img.jpg" alt=""></div>
+				<?php } ?>
+
+			</div>
+			<div class="slide-caption">
+    <?php  if($sitesetting['banner_title']){ ?>
+				<h1><?php echo $sitesetting['banner_title']; ?></h1>
+				<!-- <p>Find Jobs, Talent, Employment & Career Opportunities</p> -->
+    <?php } ?>
+				<?php } ?>
+
+<div class="serch-bar">
+
+				<form method="get" accept-charset="utf-8" inputdefaults=" " class="form-horizontal" id="searchfrom" action="<?php echo SITE_URL ?>/search/search">
+					<div class="form-group">
+						<div class="col-sm-4 col-xs-6">
+
+							<?php echo $this->Form->input('name',array('class'=>'form-control','label' =>false,'placeholder'=>'What are you looking for...','autocomplete'=>'off')); ?>
+						</div>
+						<div class="col-sm-3 col-xs-6">
+							<?php $opt= array('1'=>'Job','2'=>'Talent'); ?>
+							<?php echo $this->Form->input('optiontype',array('class'=>' typesearch form-control','required'=>true,'label' =>false,'type'=>'select','options'=>$opt,'autocomplete'=>'off')); ?>
+						</div>
+						<div class="col-sm-2 col-xs-6">
+							<button type="submit" class="btn btn-default">Submit</button></div>
+							<div class="col-sm-3 col-xs-6"> <a href="<?php echo SITE_URL; ?>/search/advanceJobsearch" class="btn btn-primary btn-block" id="dynlink">Advance Search</a> </div>
+						</div>
+						<?php echo $this->Form->end(); ?>
+					</div>
+				</div>
+			</section>
+
+
+
+			<script type="text/javascript">
+
+				$(".typesearch").change(function(){
+
+					var site_url='<?php echo SITE_URL;?>/';
+					var type=$(".typesearch").val();
+
+					if(type==1){
+						$('#dynlink').attr('href',site_url+'search/advanceJobsearch');
+						$('#searchfrom').attr('action',site_url+'search/search');
+
+					}else{
+						$('#dynlink').attr('href',site_url+'search/advanceProfilesearch');
+						$('#searchfrom').attr('action',site_url+'search/profilesearch');
+
+					}
+				});
+
+			</script>
+			<!--------------------------------------------------> 
+
+			<!----------------------slider-bottom------------------------>
+
+			<section id="slider-bottom">
+				<div class="container">
+					<div class="row">
+						<div class="col-sm-8">
+							<p class="text-left">We Help You Find Talent</p>
+						</div>
+						<div class="col-sm-4 text-right">
+							<a href="<?php echo SITE_URL; ?>/jobpost/" class="btn btn-info">Post Your Requirement</a>
+         <?php /* if($this->request->session()->read('Auth.User.id')){ ?>
+			 <a href="<?php echo SITE_URL; ?>/jobpost/" class="btn btn-info">Post Your Requirement</a>
+			
+    <?php } else{ ?>
+   <a href="#loginmodal" data-toggle="modal" onclick="assignloginaction('jobpost')" class="btn btn-info" data-action="jobpost">Post Your Requirement</a>
+<?php } */?>
+
+</div>
+</div>
+</div>
+</section>
+
+<!--------------------------------------------------> 
+
+<!----------------------Featured Artistes---------------------->
+<?php if(count($talent) > 0){ ?>
+	<section id="col_Featured">
+		<div class="container">
+			<h2><a href="<?php echo SITE_URL; ?>/featuredartist" target="_blank" style="text-align: center; color: #58595b;" > Featured <span>Profiles </a></span></h2> 
+			<p class="m-bott-50">Self Featured Profiles of Members</p> 
+			<?php if(count($talent) > 6){ ?>
+				<div class="text-center m-top-20">
+					<a href="<?php echo SITE_URL; ?>/featuredartist" class="btn btn-default" target="_blank" >View All</a>
+				</div>
+				<br>
+				<br>
+			<?php } //echo count($viewfeaturedartist); ?>
+			<div class="owl-carousel owl-theme owl-loaded featured-list-carousal">
+				<?php 
+				$role_id = $this->request->session()->read('Auth.User.role_id');
+				$count=1;
+        foreach($viewfeaturedartist as $featuredartist){ //pr($featuredartist);
+        	$userid = $featuredartist['user_id'];
+			  $profile = $this->Comman->profiledetail($userid); //pr($profile); die;
+			  $totaluserlikes=$this->Comman->likess($userid);
+			  $profilesave=$this->Comman->profilesave($userid);
+			  $sabscriptionpr=$this->Comman->subscriptionpr($userid);
+		    //pr($sabscriptionpr); die;
+			  ?>
+			  <div class="owl-item profile-det">
+			  	<div class="profile-det-img">
+			  		<div class="hvr-icon">
+			  			<!-- <a href="#" class="fa fa-save"></a> <a href="#" class="fa fa-remove"></a> -->
+			  		</div>
+			  		<?php if ($featuredartist['profile_image']) { //echo "1"; ?>
+			  		<img src="<?php echo SITE_URL; ?>/profileimages/<?php echo $featuredartist['profile_image']; ?> ">
+			  	<?php }else{ ?>
+			  		<img src="<?php echo SITE_URL; ?>/profileimages/edit-pro-img-upload.jpg">
+			  	<?php } ?>
+			  	<?php if(isset($sabscriptionpr)){ ?>
+			  		<div class="img-top-bar"> <a href="<?php echo SITE_URL; ?>/profilepackage" class="fa fa-user" title="<?php echo $sabscriptionpr['Profilepack']['name']." Profile Package"; ?>"></a>  </div>
+			  	<?php } ?>
+
+
+			  </div>
+			  <!--<div class="allcontact-social">-->
+			  	<!--  <a href="#" class="fa fa-user"></a>-->
+			  	<!--  <a href="#" class="fa fa-thumbs-up"></a>-->
+			  	<!--  <a href="#" class="fa fa fa-share"></a>-->
+			  	<!--  <a href="#" class="fa fa-comment"></a>-->
+			  	<!--  <a href="#" class="fa fa-send"></a>-->  
+			  	<!--  <a href="#" class="fa fa-download"></a>-->
+			  	<!--  <a href="#" class="fa fa-file"></a>-->
+			  	<!--  <a href="#" class="fa fa-ban"></a>-->
+			  	<!--</div>-->
+			  	<div class="contact-detail-social-icon profile_action">
+			  		<ul class="list-unstyled">
+
+			  			<li>
+			  				<?php 
+			  				$contactrequest = $this->Comman->contactreqstatus($userid); //pr($contactrequest); die; ?>
+			  				<span class="dropdown"> 
+			  					<?php if($contactrequest=='R'){ ?>
+			  						<a href="javascript:void(0)" style="color: yellow" class="fa fa-user-plus bg-blue bg-blue" data-toggle="tooltip" title="Request Received"></a>
+
+			  					<?php }elseif($contactrequest=='S'){ ?>
+			  						<a href="javascript:void(0)" style="color: yellow" class="fa fa-user-plus bg-blue" data-toggle="tooltip" title="Request Sent"></a>
+
+			  					<?php }elseif($contactrequest=='C'){?>
+			  						<a data-toggle="tooltip" title="Request Send" id="add_friend<?php echo $profile['user']['id'];?>" class="managefriends<?php echo $count; ?> fa fa-handshake-o bg-blue" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" href="javascript:void(0)" data-val="<?php echo $profile['user']['id'];?>" data-action="connect"></a>
+
+			  					<?php }else{?>
+			  						<a data-toggle="tooltip" title="Request Send" id="add_friend<?php echo $profile['user']['id'];?>" class="dropdown-toggle managefriends<?php echo $count; ?> fa fa-user-plus bg-blue" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" href="javascript:void(0)" data-val="<?php echo $profile['user']['id'];?>" data-action="connect"> </a>
+			  						<?php 
+			  					} 
+			  					?>
+			  				</li> 
+																<?php /* if($contactrequest=='R'){ ?>
+																	<li>
+																		<a href="javascript:void(0)" style="color: yellow" class="fa fa-user-plus bg-blue bg-blue" title="Request Received"></a>
+																	</li>
+																<?php }elseif($contactrequest=='S'){ ?>
+																	<li>
+																		<a href="javascript:void(0)" style="color: yellow" class="fa fa-user-plus bg-blue" title="Request Sent"></a>
+																	</li>
+																<?php }elseif($contactrequest=='C'){ ?>
+																	<li>
+																		<a  id="add_friend<?php echo $profile['user']['id'];?>" class="btn btn-default dropdown-toggle  managefriends fa fa-handshake-o bg-blue" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" href="javascript:void(0)" data-val="<?php echo $profile['user']['id'];?>" data-action="connect">ddddddddd</a>
+																		
+																	</li>
+																	<?php }elseif($contactrequest=='N'){ ?>
+																	<li>
+																		<a class="fa fa-user-plus bg-blue" href="javascript:void(0)" onclick="showerror('You are not authorize to make connections.');" data-val="<?php echo $profile['user']['id'];?>"></a>
+																		
+																	
+																	</li>
+																<?php } */?>
+																<li>
+																	<a href="javascript:void(0)" class="bg-blue <?php echo (isset($totaluserlikes) && $totaluserlikes >0)?'active':'';?> likeprofile<?php echo $count; ?>" id="likeprofile<?php echo $userid; ?>" data-toggle="tooltip" data-val="<?php echo ($userid)?$userid:'0' ?>" title="Like"><i class="fa fa-thumbs-up"></i></a>
+
+																	<!-- <div class="like"><a href="<?php //echo SITE_URL?>/profile/profilelikedusers/<?php //echo ($userid)?$userid:'0' ?>" data-toggle="modal" class="m-top-5 singlelikeprofile<?php echo $count; ?>  likeprofile" id="totallikes"><?php //echo $totallikes; ?></a></div> -->
+																</li>
+
+																<script>
+																	
+																	/*  Like Profile profile*/
+																	$('.likeprofile<?php echo $count; ?>').click(function(){
+
+																		var profile=$(this).data('val');
+                                                                    	//alert(profile); 
+                                                                    	event.preventDefault();
+                                                                    	$.ajax({
+                                                                    		dataType: "html",
+                                                                    		type: "post",
+                                                                    		evalScripts: true,
+                                                                    		url: '<?php echo SITE_URL;?>/profile/likeprofile',
+                                                                    		data: {user_id:profile},
+                                                                    		beforeSend: function() {
+
+
+                                                                    		},
+
+                                                                    		success:function(response){
+
+                                                                    			var myObj = JSON.parse(response);
+                                                                    	 //console.log(myobj); 
+                                                                    	 if(myObj.status=='like'){
+
+                                                                    	 	$('#likeprofile'+profile).css('color','red');
+                                                                    	 }else{
+                                                                    	 	$('#likeprofile'+profile).css('color','white');
+                                                                    	 }
+
+
+                                                                    	},
+                                                                    	complete: function() {
+
+
+
+                                                                    	},
+                                                                    	error: function(data) {
+                                                                    		alert(JSON.stringify(data));
+
+                                                                    	}
+
+                                                                    });
+
+                                                                    });
+																	
+																	function showerror(error)
+																	{
+																		BootstrapDialog.alert({
+																			size: BootstrapDialog.SIZE_SMALL,
+																			title: "<img title='Book an Artiste' src='<?php echo SITE_URL; ?>/images/book-an-artiste-logo.png' alt='Book an Artiste' class='img-circle' height='26' width='26'> - Notification !!",
+																			message: "<h5>"+error+"</h5>"
+																		});
+																		return false;
+																	}
+																	
+																	var site_url='<?php echo SITE_URL;?>/';
+																	/*  Manage friends  */
+																	$('.managefriends<?php echo $count; ?>').click(function() {
+																		user_id = $(this).data('val');
+																		action = $(this).data('action');
+																		if(user_id > 0)
+																		{
+																			$.ajax({
+																				type: "POST",
+																				url: '<?php echo SITE_URL;?>/profile/managefriends',
+																				data: {user_id: user_id, action: action},
+																				cache:false,
+																				success:function(data){ 
+																					obj = JSON.parse(data);
+																					if(obj.status==0)
+																					{
+																						showerror(obj.error);
+																					}
+																					else
+																					{
+																						location.reload();
+																					}
+																				}
+																			});
+																		}
+																		else
+																		{
+																			showerror(error_text);
+																		}
+																	});
+																</script>
+
+																<script>
+													$('.singlelikeprofile<?php echo $count; ?>').click(function(e){ //alert();
+														e.preventDefault();
+														$('#myModallikesvideo').modal('show').find('.modal-body').load($(this).attr('href'));
+													});
+													$('#closemodal').click(function() {
+														$('#myModallikesvideo').modal('hide');
+													});
+												</script>
+												<li> <a data-toggle="tooltip" href="javascript:void(0)" class="bg-blue profileshare<?php echo $count; ?>" data-toggle="tooltip" title="Share"><i class="fa fa-share"></i></a>
+
+													<div class="share_button profileshare-toggle share-toggle<?php echo $count; ?>" style="display: none;">
+														<ul class="list-unstyled list-inline text-center">
+															<li>
+																<a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo SITE_URL; ?>/viewprofile/<?php echo ($userid)?$userid:'0' ?>" class="fb-share-button" 
+																	data-href="<?php echo SITE_URL; ?>/gallery/<?php echo $videos_data['video_name']; ?>" target="_blank"> <i class="fa fa-facebook fa-lg"></i>
+																</a>
+															</li>
+															<li>
+
+
+																<a href="https://plus.google.com/share?url=<?php echo SITE_URL; ?>/viewprofile/<?php echo ($userid)?$userid:'0' ?>" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,height=600,width=600');return false;"><i class="fa fa-google-plus fa-lg"></i></a>
+
+
+
+															</li>
+															<li>
+																<a href="http://twitter.com/share?url=<?php echo SITE_URL; ?>/viewprofile/<?php echo ($userid)?$userid:'0' ?>" target="_blank"><i class="fa fa-twitter fa-lg"></i></a>
+															</li>
+
+															<li>	 
+																<a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=<?php echo SITE_URL; ?>/viewprofile/<?php echo ($userid)?$userid:'0' ?>" target="_blank" title="Share to LinkedIn" class="fa fa-linkedin fa-lg">
+
+																</a>
+															</li>
+
+
+															<li> <a href="javascript:void(0)" class="fa fa-whatsapp fa-lg whatsapps" data-wh="<?php echo SITE_URL; ?>/viewprofile/<?php echo ($userid)?$userid:'0' ?>"></a></li>
+
+														</ul>
+													</div>
+
+
+
+
+													<!--<div class="like"><a href="#">18</a></div>-->
+												</li>
+												<script>
+													$(document).ready(function(){
+														$(".profileshare<?php echo $count; ?>").click(function(){
+															$(".share-toggle<?php echo $count; ?>").slideToggle();
+														});
+													});
+												</script>
+
+												<li> <a href="javascript:void(0)"  data-val="<?php echo ($userid)?$userid:'0' ?>"  class="sendmessage<?php echo $count; ?> bg-blue" data-toggle="tooltip" title="Send Message"><i class="fa fa-envelope"></i></a></li>
+
+
+												<script>
+													$('.sendmessage<?php echo $count; ?>').click(function(e){
+														e.preventDefault();
+														userid = $(this).data('val');
+														messagingurl = '<?php echo SITE_URL; ?>/message/sendmessage/'+userid;
+														$('#sendmessage').modal('show').find('.modal-body').load(messagingurl);
+													});
+												</script>
+
+												<!--<li><a href="#" class="bg-blue" data-toggle="tooltip" title="Send"><i class="fa fa-paper-plane-o"></i></a></li> -->
+
+												<li> <a href="javascript:void(0)" <?php if($userid>0){ ?> data-toggle="modal" data-target="#reportuser" <?php }else{ ?> onclick="showerror('You cannot Report for yourself.')"  <?php }?> class="bg-blue" data-toggle="tooltip" title="Report"><i class="fa fa-flag"></i></a></li>
+
+
+												<?php $userblock=$this->Comman->blockuser($userid); //pr($userblock); ?>
+												<!--<li><a href="javascript:void(0)" id="blockprofile<?php echo $count; ?>" data-blockid="<?php echo (isset($userblock) && $userblock >0)?'idblocked':'';?>" data-name="<?php echo $profile->name; ?>" data-val="<?php echo ($userid)?$userid:'0' ?>" class="bg-blue <?php echo (isset($userblock) && $userblock >0)?'active':'';?> " data-toggle="tooltip" title="Block"><i class="fa fa-ban"></i></a></li>-->
+
+												<script>
+													/*  Block Profile profile*/
+                                                    // $('#blockprofile<?php echo $count; ?>').click(function() {
+                                                    //     //alert("hello");
+                                                    //   error_text = "You cannot Block yourself";
+                                                    //   user_id = $(this).data('val');
+                                                    //   if(user_id > 0)
+                                                    //   {
+                                                    // 	$.ajax({
+                                                    // 	  type: "POST",
+                                                    // 	  url: '<?php echo SITE_URL;?>/profile/blockprofile',
+                                                    // 	  data: {user_id: user_id},
+                                                    // 	  cache:false,
+                                                    // 	  success:function(data){ 
+                                                    // 		obj = JSON.parse(data);
+                                                    // 		if(obj.error==1)
+                                                    // 		{
+                                                    // 		  showerror(error_text);
+                                                    // 		}
+                                                    // 		else
+                                                    // 		{
+                                                    // 		  if(obj.status=='block'){
+                                                    // 			$("#blockprofile<?php echo $count; ?>").addClass('active');
+                                                    // 		  }else{
+                                                    // 			$("#blockprofile<?php echo $count; ?>").removeClass('active');
+                                                    // 		  }
+                                                    // 		}
+                                                    // 	  }
+                                                    // 	});
+                                                    //   }
+                                                    //   else
+                                                    //   {
+                                                    // 	showerror(error_text);
+                                                    //   }
+                                                    // });
+                                                </script>
+                                                
+                                                <?php $downloadprofilecheck = $this->Comman->downloadprofile( ($userid)?$userid:'0'); ?>
+                                                <?php if ($downloadprofilecheck!=0){ ?>
+                                                	<li> <a href="<?php echo SITE_URL; ?>/profile/profilePdf/<?php echo ($userid)?$userid:'0' ?>" class="fa fa-download bg-blue" title="Download"></a></li>
+                                                <?php } ?>
+
+
+                                                
+                                                <div class="clearfix"> </div>
+                                            </ul>
+                                        </div>
+                                        <?php $skills= $this->Comman->userskills($featuredartist['user_id']); 
+
+                                        ?>
+
+
+
+                                        <div class="all-cnt-det" style="min-height: 10px;"><h5 class="text-center"><a href="<?php echo SITE_URL; ?>/viewprofile/<?php echo $featuredartist['user_id']; ?>"><?php echo $featuredartist['Profile__name']; ?></a></h5>
+
+                                        	<p class="text-center">   <?php if($skills)
+                                        	{
+                                        		$knownskills = '';
+                                        		foreach($skills as $skillquote)
+                                        		{
+                                        			if(!empty($knownskills))
+                                        			{
+                                        				$knownskills = $knownskills.', '.$skillquote['skill']['name'];
+                                        			}
+                                        			else
+                                        			{
+                                        				$knownskills = $skillquote['skill']['name'];
+                                        			}
+                                        		}
+                                        		$output.=str_replace(',',' ',$knownskills).',';
+          //$output.=$knownskills.",";  
+                                        		echo $knownskills;
+                                        	} ?></p></div>
+                                        	<?php if ($role_id==NONTALANT_ROLEID) { ?>
+                                        		<div class="btn-book text-center">
+                                        			<a target="_blank" id="booknows" href="<?php echo SITE_URL; ?>/viewprofile/<?php echo $featuredartist['user_id'] ?>" class="btn btn-default">Book Now</a>
+                                        			<a target="_blank" id="askquot" href="<?php echo SITE_URL; ?>/viewprofile/<?php echo $featuredartist['user_id'] ?>" class="btn btn-primary">Ask For Quote</a>
+                                        		</div>
+                                        	<?php } ?>
+
+                                        </div>
+
+                                        <?php $count++; } ?>
+
+        <?php /* foreach($talent as $artistvalue){   
+
+            $icondata=$this->Comman->icon($artistvalue['id']);
+
+         ?>
+        <div class="owl-item">
+          <div class="artistes"> <a href="<?php echo SITE_URL; ?>/viewprofile/<?php echo $artistvalue['profile']['user_id']; ?>"><img src="<?php echo SITE_URL ?>/profileimages/<?php  if($artistvalue['profile']['profile_image']) { echo $artistvalue['profile']['profile_image']; }else{ echo "edit-pro-img-upload.jpg"; }?>"></a>
+            <div class="arist-circle">
+              <div class="artist-inner-circle">
+                <div class="arist-circle-inner"> <a href="#">
+                <?php foreach($icondata as $value){ 
+
+                  if($value['package_type']=="PR"){
+                      $iconimage=$this->Comman->profilepack($value['package_id']);
+
+                    }else if($value['package_type']=="RC"){
+                        $iconimage=$this->Comman->recpack($value['package_id']);
+                    }else{}
+                    ?>
+                 <img src="<?php echo SITE_URL ?>/img/<?php echo $iconimage['icon']?>"/>
+                <?php } ?>  
+                </a> </div>
+              </div>
+            </div>
+          </div>
+          <h5><a href="<?php echo SITE_URL; ?>/viewprofile/<?php echo $artistvalue['profile']['user_id']; ?>"><?php echo $artistvalue['profile']['name']; ?></a></h5>
+          <?php foreach ($artistvalue['skillset'] as $artistskill){ //pr($artistskill);?>
+          
+          <h6><?php echo $artistskill['skill']['name']; ?></h6>
+          <?php } ?>
+          <p><?php echo $artistvalue['profile'][0]['country']['name'];?></p>
+        </div>
+
+    <?php } */ ?>
+
+
+</div>
+
+</div>
+</section>
+
+<?php }?>
+<!--------------------------------------------------> 
+
+<!----------------------Featured jobs---------------------->
+
+<section id="col_Featured_jobs">
+	<div class="container">
+		<h2><a href="<?php echo SITE_URL; ?>/featuredjob" target="_blank" style="text-align: center; color: #58595b;" >Featured <span>Jobs</a></span></h2>
+		<p class="m-bott-50">Jobs promoted by users</p>
+		<div class="clearfix job-box">
+			<div class="col-sm-12">
+				<div class="row">
+    <?php foreach($featuredReuirment as $requirement){ //pr($requirement); die;
+    	$role_id = $this->request->session()->read('Auth.User.role_id');
+    	$icondata=$this->Comman->icon($requirement['Requirement__user_id']);
+    	$userid= $requirement['Requirement__user_id'];
+      $profilepackage = $this->Comman->profilepackage($userid); //pr($profilepackage); die; 
+	  $recruiterpackage = $this->Comman->recruiterpackage($userid); //pr($recruiterpackage); die; 
+	  ?>
+
+	  <div class="col-sm-12 job-card">
+	  	<div class="col-sm-2">
+	  		<div class="fea-img"> 
+
+	  			<?php if($profilepackage){ 
+	  				$currentdate = date("Y-m-d h:i:s");
+	  				$prpackdatestart = date("Y-m-d h:i:s",strtotime($profilepackage['subscription_date']));
+	  				$prpackdateend = date("Y-m-d h:i:s",strtotime($profilepackage['expiry_date']));
+	  				if($prpackdatestart <= $currentdate && $prpackdateend >= $currentdate){ ?>
+	  					<img src="<?php echo SITE_URL ?>/job/<?php echo $requirement['Requirement__image'];?>" onerror="this.onerror=null;this.src='<?php echo SITE_URL ?>/images/job.jpg';">
+	  					<div class="arist-circle">
+	  						<div class="artist-inner-circle">
+	  							<div class="arist-circle-inner"> <a href="#"><i class="fa fa-user"></i></a> </div>
+	  						</div>
+	  					</div>
+	  				<?php } ?>
+	  			<?php }elseif($recruiterpackage){ 
+	  				$currentdate = date("Y-m-d h:i:s");
+	  				$rcpackdatestart = date("Y-m-d h:i:s",strtotime($recruiterpackage['subscription_date']));
+	  				$rcpackdateend = date("Y-m-d h:i:s",strtotime($recruiterpackage['expiry_date']));
+	  				if($rcpackdatestart < $currentdate && $rcpackdateend > $currentdate){ ?> 
+	  					<img src="<?php echo SITE_URL ?>/job/<?php echo $requirement['Requirement__image'];?>" onerror="this.onerror=null;this.src='<?php echo SITE_URL ?>/images/job.jpg';">
+	  					<div class="arist-circle">
+	  						<div class="artist-inner-circle">
+	  							<div class="arist-circle-inner"> <a href="#"><i class="fa fa-user"></i></a> </div>
+	  						</div>
+	  					</div>
+
+	  				<?php } }else{ ?>
+	  					<img src="<?php echo SITE_URL; ?>/images/job.jpg">
+	  				<?php } ?>
+
+	  				<div class="arist-circle">
+	  					<div class="artist-inner-circle">
+	  						<div class="arist-circle-inner"> 
+                  <?php $proiconimage=$this->Comman->profilepack($requirement['p_package']); //pr($proiconimage); die;
+                  if ($proiconimage['icon']) { ?>
+                  	<a href="#" title="<?php echo $proiconimage['name']." Profile Pack"; ?>"> <i class="fa fa-user"></i> </a> 
+                  <?php }else{ ?>
+                  	<i class="fa fa-user"></i>
+                  <?php } ?>
+
+                  <?php 
+                  $iconimage=$this->Comman->recpack($requirement['r_package']); // pr($iconimage); die;
+                  if ($iconimage['icon']) { ?>
+                  	<a href="#" data-toggle="tooltip" title="Recruiter Pack : <?php echo $iconimage['title']; ?>"> <img src="<?php echo SITE_URL ?>/img/<?php echo $iconimage['icon']; ?>"/> </a> 
+                  <?php }else{ ?>
+                  	<i class="fa fa-user"></i>
+                  <?php } ?>
+
+                  <?php 
+                  ?>
+
+
+
+              </div>
+          </div>
+      </div>
+  </div>      
+</div>
+
+
+<div class="col-sm-10">
+
+	<h3 class="heading"><a href="<?php echo SITE_URL ?>/applyjob/<?php echo $requirement['Requirement__id'];?>"><?php echo $requirement['Requirement__title']; ?> </a><span> <a href="javascript:void(0)" data-toggle="tooltip" title="Last Date and Time of Application" data-placement="top"><?php echo date('M d,Y h:i:a',strtotime($requirement['Requirement__last_date_app'])); ?> </a></span></h3>
+
+	<script>
+		$(document).ready(function(){
+			$('[data-toggle="tooltip"]').tooltip();   
+		});
+	</script>
+
+	<p><a href="<?php echo SITE_URL; ?>/viewprofile/<?php echo $requirement['Requirement__user_id']; ?>"><?php echo $requirement['name']; ?></a>  <span class="color-a"> | <?php echo $requirement['Requirement__location']; ?></span></p>
+	<?php $talenttype=$this->Comman->requiredetail($requirement['Requirement__id']); //pr($talenttype); ?>            
+	<p class="selected"><?php 
+	$i=0;
+	foreach($talenttype as $value){
+              //pr($value);
+		if($i==0){
+			echo $value['skill']['name'];
+		}else{
+			echo ", ".$value['skill']['name'];
+		} 
+
+		$i++;
+	}
+             //echo $requirement['Requirement__talent_requirement_description']; 
+
+	?></p>
+	<div class="row">
+		<div class="col-sm-8">
+			<div class="icon-bar srh-icon-bar">  
+
+				<a href="javascript:void(0)" class="fa fa-thumbs-up likejobs" data-job="<?php echo $requirement['Requirement__id'] ?>" id="like<?php echo $requirement['Requirement__id'] ?>" <?php if(in_array($requirement['Requirement__id'],$likejobarray)) { ?> style="color:red" <?php  } ?> alt="Likes Jobs"></a>
+
+				<meta property="og:title" content="Book an Artiste">
+				<meta property="og:image" content="<?php echo SITE_URL."/job/".$requirement['Requirement__image'];  ?>">
+				<meta property="og:url" content="<?php echo SITE_URL ?>/applyjob/<?php echo $requirement['Requirement__id'] ?>" />
+				<meta property="og:description" content="<?php echo $requirement['Requirement__talent_requirement_description'] ?>"/> 
+				<meta itemprop="image" content="<?php echo SITE_URL."/job/".$requirement['Requirement__image'];  ?>">
+
+				<a href="javascript:void(0)" class="fa fa-share fb jobshare" data-link="http://bookanartiste.com/applyjob/<?php echo $requirement['Requirement__id'] ?>" data-img="<?php echo SITE_URL."/job/".$requirement['Requirement__image'];  ?>" data-title="BookAnArtiste"></a> 
+
+				<div class="share_button jobshare-toggle" style="display: none; top:40px; position: absolute;background-color: rgb(255, 255, 255); color: black;">
+					<ul class="list-unstyled list-inline text-center clearfix">
+						<li class="pull-left">
+							<a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo SITE_URL; ?>/applyjob/<?php echo ($userid)?$userid:'0' ?>" class="fb-share-button" 
+								data-href="<?php echo SITE_URL; ?>/applyjob/<?php echo $requirement['Requirement__id']; ?>" target="_blank"> <i class="fa fa-facebook"></i>
+							</a>
+						</li>
+						<li class="pull-left">
+							<a href="https://plus.google.com/share?url=<?php echo SITE_URL; ?>/applyjob/<?php echo ($userid)?$userid:'0' ?>" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,height=600,width=600');return false;"><i class="fa fa-google-plus"></i></a>    
+						</li>
+						<li class="pull-left">
+							<a href="http://twitter.com/share?url=<?php echo SITE_URL; ?>/applyjob/<?php echo ($userid)?$userid:'0' ?>" target="_blank"><i class="fa fa-twitter"></i></a>
+						</li>
+
+						<li class="pull-left">	 
+							<a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=<?php echo SITE_URL; ?>/applyjob/<?php echo ($userid)?$userid:'0' ?>" target="_blank" title="Share to LinkedIn">
+								<i class="fa fa-linkedin"></i>
+							</a>
+						</li>
+
+
+						<li class="pull-left"> <a href="javascript:void(0)" class="whatsapps" data-wh="<?php echo SITE_URL; ?>/viewprofile/<?php echo ($userid)?$userid:'0' ?>"><i class="fa fa-whatsapp"></i></a></li>
+
+					</ul>
+				</div>
+
+				<script>
+					$(document).ready(function(){
+						$(".jobshare").click(function(){
+							$(".jobshare-toggle").slideToggle();
+						});
+					});
+				</script>
+
+				<a href="javascript:void(0)"  data-toggle="modal" data-target="#reportuser"  class="" data-toggle="tooltip" title="Report"><i class="fa fa-flag"></i></a>
+
+				<a href="javascript:void(0)" class="fa fa-floppy-o savejobs" data-job="<?php echo $requirement['Requirement__id'] ?>" id="<?php echo $requirement['Requirement__id'] ?>" <?php if(in_array($requirement['Requirement__id'],$savejobarray)) { ?> style="color:red" <?php  } ?> alt="Save Jobs"></a>
+
+
+				<a href="javascript:void(0)" class="fa fa-ban block" data-job="<?php echo $requirement['Requirement__id'] ?>" id="block<?php echo $requirement['Requirement__id'] ?>" <?php if(in_array($requirement['Requirement__id'],$blockjobarray)) { ?> style="color:red" <?php  } ?> alt="Block Jobs"></a>
+
+
+			</div>
+			<div id="popoverbtn"></div>
+                <!--<button type="button" onclick="$('#popoverbtn').popover('toggle');">share</button>
+                	<button type="button" >save</button>-->
+                </div>
+                <?php if ($role_id==TALANT_ROLEID) { ?>
+                	<div class="col-sm-2 text-right">
+                		<a href="<?php echo SITE_URL ?>/applyjob/<?php echo $requirement['Requirement__id'];?>" class="btn btn-default">Apply</a>
+                	</div>
+                	<div class="col-sm-2 text-right">
+                		<a href="<?php echo SITE_URL ?>/applyjob/<?php echo $requirement['Requirement__id'];?>" class="btn btn-default">Send Quote</a>
+                	</div>
+                <?php } ?>
+            </div>
+        </div>
+    </div>
+<?php } ?>
+
+
+
+</div>
+
+
+</div>
+
+
+		  <?php /* foreach($requirementfeatured as $featuredvalue){ 
+ //pr($featuredvalue);
+$icondata=$this->Comman->icon($featuredvalue['user_id']);
+       ?>
+        <div class="col-sm-12 job-card">
+          <div class="col-sm-2">
+          <div class="fea-img"> <img src="<?php echo SITE_URL ?>/job/<?php echo $featuredvalue['image'];?>" onerror="this.onerror=null;this.src='<?php echo SITE_URL ?>/images/job.jpg';">
+            <div class="arist-circle">
+              <div class="artist-inner-circle">
+                <div class="arist-circle-inner"> <a href="#">
+
+                  <?php foreach($icondata as $value){ 
+
+                  if($value['package_type']=="PR"){
+                      $iconimage=$this->Comman->profilepack($value['package_id']);
+
+                    }else if($value['package_type']=="RC"){
+                        $iconimage=$this->Comman->recpack($value['package_id']);
+                    }else{}
+                    ?>
+                 <img src="<?php echo SITE_URL ?>/img/<?php echo $iconimage['icon']?>"/>
+                <?php } ?> 
+
+
+                </a> </div>
+              </div>
+            </div>
+          </div>      
+         </div>
+          <div class="col-sm-10">
+          
+            <h3 class="heading"><a href="<?php echo SITE_URL ?>/applyjob/<?php echo $featuredvalue['id'];?>"><?php echo $featuredvalue['title']; ?> </a><span> <?php echo date('d M Y h:m:sa',strtotime($featuredvalue['last_date_app'])); ?></span></h3>
+            <p><a href="<?php echo SITE_URL; ?>/viewprofile/<?php echo $featuredvalue['user']['id']; ?>"><?php echo $featuredvalue['user']['profile']['name']; ?></a>  <span class="color-a"> | <?php echo $featuredvalue['location']; ?></span></p>
+            <p class="selected"><?php echo $featuredvalue['talent_requirement_description']; ?></p>
+            <div class="row">
+              <div class="col-sm-8">
+                <div id="popoverbtn"></div>
+                
+              </div>
+            
+              
+            </div>
+
+          </div>
+        </div>
+
+       
+    <?php }*/ ?>
+
+
+</div>
+<?php  if(count($featuredReuirment) > 6){ ?>
+	<div class="text-center m-top-20">
+		<a href="<?php echo SITE_URL; ?>/featuredjob" class="btn btn-default" target="_blank" >View All</a>
+	</div>
+<?php }?>
+</div>
+</section>
+
+
+<!--------------------------------------------------> 
+
+<!----------------------col_work_process---------------------->
+
+<section id="col_work_process">
+	<div class="container">
+		<h2>How It  <span>Work</span></h2>
+		<p class="m-bott-50">Here You Can See</p>
+		<div class="row">
+			<ul class="nav nav-pills text-center">
+				<li class="active"><a data-toggle="tab" href="#Got-Talent" class="hvr-bubble-bottom">Got Talent</a></li>
+				<li><a data-toggle="tab" href="#Need-Talent" class="hvr-bubble-bottom">Need Talent</a></li>
+			</ul>
+			<div class="tab-content">
+				<div id="Got-Talent" class="tab-pane fade in active">
+					<div class="container">
+						<ul class="progressbar">
+							<li class="col-sm-3"><a href="<?php echo SITE_URL; ?>/signup"><img src="images/work_1.png">
+								<p>Create Profile</p>
+							</a></li>
+							<li class="col-sm-3"><a href="javascript:void(0)"><img src="images/work_2.png">
+								<p>Search</p>
+							</a></li>
+							<li class="col-sm-3"><a href="javascript:void(0)"><img src="images/work_3.png">
+								<p>Apply</p>
+							</a></li>
+							<li class="col-sm-3"><a href="javascript:void(0)"><img src="images/work_4.png">
+								<p>Got Paid Directly</p>
+							</a></li>
+						</ul>
+					</div>
+				</div>
+				<div id="Need-Talent" class="tab-pane fade">
+					<h3>Menu 1</h3>
+					<p>coming soon.....</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<!--------------------------------------------------> 
+
+<!----------------------col_so_net---------------------->
+<section id="col_so_net">
+	<div class="container">
+		<h2> <span>Features</span></h2>
+		<p class="m-bott-50">Here You Can See</p>
+		<div class="row">
+			<div class="col-sm-5 social-net-blog"><img src="images/website-features.gif"></div>
+			<div class="col-sm-7 social-net-blog-cntnt">
+
+				<div class="row"> <div class="col-sm-12 col-xs-6"><div class="row">
+					<div class="col-sm-2"><img src="images/acc_2.png" ></div>
+					<div class="col-sm-10 netwrk-cntnt">
+						<h6>Social Network</h6>
+						<p> Add Friends, Manage Contacts, Create your own Network of Performers and reach out.</p>
+					</div>
+				</div></div>
+				<div class="col-sm-12 col-xs-6"><div class="row">
+					<div class="col-sm-2"><img src="images/acc_3.png" ></div>
+					<div class="col-sm-10 netwrk-cntnt">
+						<h6>Personal Messages</h6>
+						<p>Use Personal Messages to freely Share your thoughts and ideas.</p>
+					</div>
+				</div></div>
+				<div class="col-sm-12 col-xs-6"><div class="row">
+					<div class="col-sm-2"><img src="images/acc_4.png" ></div>
+					<div class="col-sm-10 netwrk-cntnt">
+						<h6>Share With Friends</h6>
+						<p>Spread the word about you, your work and what you do.</p>
+					</div>
+				</div></div>
+				<div class="col-sm-12 col-xs-6"><div class="row">
+					<div class="col-sm-2"><img src="images/acc_5.png" ></div>
+					<div class="col-sm-10 netwrk-cntnt">
+						<h6>Activities</h6>
+						<p>Let others see your likes, dislike and your preferences through the activities board.</p>
+					</div>
+				</div></div>
+				<div class="col-sm-12 col-xs-6"><div class="row">
+					<div class="col-sm-2"><img src="images/acc_6.png" ></div>
+					<div class="col-sm-10 netwrk-cntnt">
+						<h6> Calender Management</h6>
+						<p>Manage and Organise your day to day work, Get Notifications and Reminders.</p>
+					</div>
+				</div></div>
+				<div class="col-sm-12 col-xs-6"><div class="row">
+					<div class="col-sm-2"><img src="images/acc_7.png" ></div>
+					<div class="col-sm-10 netwrk-cntnt">
+						<h6> Review Ratings</h6>
+						<p>Give and receive detailed ratings about various work related parameters.</p>
+					</div>
+				</div></div>
+
+				<div class="col-sm-12 col-xs-6"><div class="row">
+					<div class="col-sm-2"><img src="images/acc_7.png" ></div>
+					<div class="col-sm-10 netwrk-cntnt">
+						<h6> Review Ratings</h6>
+						<p>Give and receive detailed ratings about various work related parameters.</p>
+					</div>
+				</div></div>
+
+				<div class="col-sm-12 col-xs-6"><div class="row">
+					<div class="col-sm-2"><img src="images/acc_7.png" ></div>
+					<div class="col-sm-10 netwrk-cntnt">
+						<h6> Review Ratings</h6>
+						<p>Give and receive detailed ratings about various work related parameters.</p>
+					</div>
+				</div></div></div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!--------------------------------------------------> 
+
+<!----------------------col_package---------------------->
+<section id="col_package">
+	<div class="container">
+		<h2> <span>Packages</span></h2>
+		<p class="m-bott-50">Here You Can See</p>
+		<div class="row">
+			<ul class="nav nav-pills text-center">
+				<li class="active"><a data-toggle="tab" href="#Profile" class="hvr-bubble-bottom">Profile</a></li>
+				<?php /* ?> <li><a data-toggle="tab" href="#Requirement" class="hvr-bubble-bottom">Requirement</a></li> <?php */ ?>
+				<li><a data-toggle="tab" href="#Recruiter" class="hvr-bubble-bottom">Recruiter</a></li>
+			</ul>
+			<div class="tab-content">
+				<div id="Profile" class="tab-pane fade in active">
+					<div class="col-sm-12 clearfix m-top-60">
+				<?php foreach($Profilepack as $key=>$value){ //pr($value);
+					$show_on_home_page = $value['show_on_home_page'];
+         // echo $value['show_on_home_page'];
+					$show_on_home_page = unserialize($show_on_home_page);
+					?>
+					<div class="col-sm-4">
+						<div class="package silver">
+							<h5><?php echo $value['name']; ?> Package</h5>
+							<div style="text-align:center;">  <strong><?php echo $value['packagetext']; ?></strong></div>
+							<div class="price"><?php echo "$".$value['price'].".00"; ?><small><span>/</span><?php echo $value['validity_days'];?> days</small></div>
+							<ul class="list-unstyled">
+								<?php if(in_array('number_audio',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['number_audio']; ?></b> Upload Audio </li>
+								<?php } ?>
+								<?php if(in_array('number_video',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['number_video']; ?></b> Upload Video</li>
+								<?php } ?>
+								<?php if(in_array('website_visibility',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['website_visibility']; ?></b> Visibility Of Personal Website</li>
+								<?php } ?>
+								<?php if(in_array('private_individual',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['private_individual']; ?></b> Private Messages</li>
+								<?php } ?>
+								<?php if(in_array('access_job',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['access_job']; ?></b> Job Access</li>
+								<?php } ?>
+								<?php if(in_array('privacy_setting_access',$show_on_home_page)){ ?>
+									<li>Privacy Setting Access-<b><?php if($value['privacy_setting_access']=='Y'){echo "Yes";}else{echo "No";} ?></b></li>
+								<?php } ?>
+								<?php if(in_array('access_to_ads',$show_on_home_page)){ ?>
+									<li>Access To Advertise-<b><?php if($value['access_to_ads']=='Y'){echo "Yes";}else{echo "No";} ?></b></li>
+								<?php } ?>
+								<?php if(in_array('number_job_application',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['number_job_application']; ?></b> Job Application Per Month</li>
+								<?php } ?>
+								<?php if(in_array('number_search',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['number_search']; ?></b> Searches Other Profile</li>
+								<?php } ?>
+								<?php if(in_array('ads_free',$show_on_home_page)){ ?>
+									<li>AD Free Experience-<b><?php if($value['privacy_setting_access']=='Y'){echo "Yes";}else{echo "No";} ?></b></li>
+								<?php } ?>
+								<?php if(in_array('number_albums',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['number_albums']; ?></b> Photos Albums</li>
+								<?php } ?>
+								<?php if(in_array('number_of_photo',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['number_of_photo']; ?></b> Photos </li>
+								<?php } ?>
+								<?php if(in_array('number_of_jobs_alerts',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['number_of_jobs_alerts']; ?></b> Job Alerts Per Month </li>
+								<?php } ?>
+								<?php if(in_array('introduction_sent',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['introduction_sent']; ?></b> Total No. of Introductions Sent</li>
+								<?php } ?>
+								<?php if(in_array('number_of_intorduction_send',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['number_of_intorduction_send']; ?></b> Total No. of Introductions Sent Per Day</li>
+								<?php } ?>
+								<?php if(in_array('number_of_introduction',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['number_of_introduction']; ?></b> Total No. of Introductions Recieved</li>
+								<?php } ?>
+								<?php if(in_array('nubmer_of_jobs',$show_on_home_page)){ ?>
+									<li><b><?php echo $value['nubmer_of_jobs']; ?></b> Job Posting</li>
+								<?php } ?>
+								<?php if(in_array('ping_price',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['ping_price']; ?></b> Ask for Quote’ Request Per Job</li>
+								<?php } ?>
+								<?php if(in_array('introduction_sent',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['introduction_sent']; ?></b> No. of Introduction Send Per Day</li>
+								<?php } ?>
+								<?php if(in_array('ping_price',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['ping_price']; ?></b> No. of Search Profile</li>
+								<?php } ?>
+								<?php if(in_array('job_alerts_month',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['job_alerts_month']; ?></b> No. of Jobs Alerts Per Month</li>
+								<?php } ?>
+								<?php if(in_array('job_alerts',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['job_alerts']; ?></b> No. of Jobs Alerts in Package</li>
+								<?php } ?>
+								<?php if(in_array('proiorties',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['proiorties']; ?></b> Proiorties</li>
+								<?php } ?>
+								<?php if(in_array('number_of_free_quote_month',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['number_of_free_quote_month']; ?></b>  Free Quote Month</li>
+								<?php } ?>
+								<?php if(in_array('number_of_free_day',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['number_of_free_day']; ?></b> Ask for Quote’ Request Per Day</li>
+								<?php } ?>
+								<?php if(in_array('message_folder',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['message_folder']; ?></b> Message Folder</li>
+								<?php } ?>
+								<?php if(in_array('number_of_booking',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['number_of_booking']; ?></b> Booking Requests Request Per Job</li>
+								<?php } ?>
+								<?php if(in_array('profile_likes',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['profile_likes']; ?></b> Total No. of Profile Likes Given Per Day</li>
+								<?php } ?>
+								<?php if(in_array('number_categories',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['number_categories']; ?></b> Skills</li>
+								<?php } ?>
+								<?php if(in_array('Visibility_Priority',$show_on_home_page)){ ?>
+									<li><b> <?php echo $value['Visibility_Priority']; ?></b> Visibility Priority</li>
+								<?php } ?>
+
+
+							</ul>
+							<div class="text-center"><form class="form-horizontal">
+
+							</form></div>
+							<ul class="text-center list-inline">
+
+							<li class="list-inline-item">
+							<a href="<?php echo SITE_URL; ?>/package/buy/profilepackage/<?php echo $value['id']; ?>" class="btn btn-default">Choose Plan</a>
+							</li>
+							<li class="list-inline-item">
+							 <a href="<?php echo SITE_URL ?>/profilepackage" class="btn btn-primary">Learn More</a>
+								</li>
+								</ul>
+
+						</div>
+					</div>
+
+				<?php } ?>
+
+			</div>
+		</div>
+		<div id="Requirement" class="tab-pane fade">
+			<div class="col-sm-12 clearfix m-top-60">
+				<?php foreach($RequirementPack as $key=>$value){ //pr($value);?>
+					<div class="col-sm-4">
+						<div class="package silver">
+							<h5><?php echo $value['name']; ?> Package</h5>
+							<div style="text-align:center;">  <strong><?php echo $value['packagetext']; ?></strong></div>
+							<div class="price"><?php echo "$".$value['price'].".00"; ?><small><span>/</span>Requirement</small></div>
+							<ul class="list-unstyled">
+								<li>Requirement for <b><?php echo $value['number_of_days']; ?> </b> Days</li>
+							</ul>
+							<div class="text-center"><form class="form-horizontal">
+							</form></div>
+							
+							<ul class="list-inline text-center">
+								<li class="list-inline-item">
+							<a href="<?php echo SITE_URL; ?>/package/buy/requirementpackage/<?php echo $value['id']; ?>" class="btn btn-default">Choose Plan</a>
+							</li>
+							<li class="list-inline-item">
+							<a href="<?php echo SITE_URL ?>/requirementpackage" class="btn btn-primary">Learn More</a>
+				</li>
+				</ul>
+
+						</div>
+					</div>
+				<?php } ?>
+			</div>
+		</div>
+		<div id="Recruiter" class="tab-pane fade">
+			<div class="col-sm-12 clearfix m-top-60">
+				<?php foreach($RecuriterPack as $key=>$value){ //pr($value);?>
+					<div class="col-sm-4">
+						<div class="package silver">
+							<h5><?php echo $value['title']; ?> Package</h5>
+							<div style="text-align:center;">  <strong><?php echo $value['packagetext']; ?></strong></div>
+							<div class="price"><?php echo "$".$value['price'].".00"; ?><small><span>/</span><?php echo $value['validity_days'];?> days</small></div>
+							<ul class="list-unstyled">
+								<li><b><?php echo $value['number_of_job_post']; ?></b> Job post </li>
+								<!--<li><b>	<?php echo $value['number_of_job_simultancney']; ?></b> Job Simultancney</li>-->
+								<!--<li><b>    <?php echo $value['priorites']; ?></b> Job Priorites</li>-->
+								<li><b>  <?php echo $value['nubmer_of_site']; ?></b> Website</li>
+								<li><b> <?php echo $value['number_of_message']; ?></b> Private Message </li>
+								<!--<li><b><?php echo $value['number_of_contact_details']; ?></b> Contact Details </li> -->
+								<li><b><?php echo $value['number_of_talent_search']; ?></b> Talent Search </li>
+								<!--<li><b>  <?php echo $value['lengthofpackage']; ?></b> Length of Package</li>-->
+								<!--<li><b> <?php echo $value['multiple_email_login']; ?></b> Multiple email login</li> -->
+								<!--<li><b> <?php echo $value['number_of_email']; ?></b> Emails</li>-->
+								<!--<li><b>  <?php echo $value['creadit_limit']; ?></b> Credit Limit</li> -->
+								<!--<li><b> <?php echo $value['ping_price']; ?> </b> Ping Price</li>-->
+
+							</ul>
+							<div class="text-center"><form class="form-horizontal">
+							</form></div>
+
+							<ul class="list-inline text-center">
+								<li class="list-inline-item">
+							<a href="<?php echo SITE_URL; ?>/package/buy/recruiterepackage/<?php echo $value['id']; ?>" class="btn btn-default">Choose Plan</a>
+							</li>
+							
+							<li class="list-inline-item">
+							 <a href="<?php echo SITE_URL ?>/package/allpackages/recruiterepackage" class="btn btn-primary">Learn More</a>
+							 </li>
+				</ul>
+
+						</div>
+					</div>
+
+				<?php } ?>
+			</div>
+		</div>
+	</div>
+</div>
+</div>
+</section>
+
+<div class="modal fade" id="reportuser" role="dialog">
+	<div class="modal-dialog">
+		<!-- Modal content-->
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Report for this User</h4>
+			</div>
+			<div class="modal-body">
+				<span id="message" style= "display: none; color: green"> Report Spam Sent Successfully...</span>
+				<span id="wrongmessage" style= "display: none; color: red"> Report Spam Not Sent...</span>
+				<?php echo $this->Form->create('',array('url' => ['controller' => 'profile', 'action' => 'reportspam'],'type'=>'file','inputDefaults'=>array('div'=>false,'label'=>false),'class'=>'form-horizontal','id'=>'submit-form','autocomplete'=>'off')); ?>
+				<?php $reportoption = array('Pornography'=>'Pornography','Offensive Behaviour'=>'Offensive Behaviour','Fake Profile'=>'Fake Profile','Terms and Conditions Violation'=>'Terms and Conditions Violation','Spam'=>'Spam','Wrong Information displayed'=>'Wrong Information displayed','Public Display of Contact Information'=>'Public Display of Contact Information'); ?>
+				<?php echo $this->Form->input('reportoption',array('placeholder'=>'Country','maxlength'=>'25','required','label' =>false,'type'=>'radio','options'=>$reportoption)); ?>
+				<?php echo $this->Form->input('description',array('class'=>'form-control','placeholder'=>'description','maxlength'=>'25','type'=>'textarea','required','label' =>false)); ?>
+				<?php echo 
+				$this->Form->input('type',array('class'=>'form-control','placeholder'=>'description','maxlength'=>'25','required','type'=>'hidden','label' =>false,'value'=>'profile')); ?>
+				<?php echo $this->Form->input('profile_id',array('class'=>'form-control','placeholder'=>'description','maxlength'=>'25','required','type'=>'hidden','label' =>false,'value'=>$profile['user_id'])); ?>
+				<?php echo $this->Form->end(); ?>
+				<div class="text-right m-top-20"><button class="btn btn-default" id="bn_subscribe">Submit</button></div>
+
+				<script type="text/javascript">
+					$(document).ready(function(){
+						$('#imagegallery').lightGallery();
+					});
+				</script>
+			</div>
+
+		</div>
+	</div>
+</div>
+
+<div id="sendmessage" class="modal fade">
+	<div class="modal-dialog">
+		<div class="modal-content" >
+			<div class="modal-body" ></div>
+		</div>
+		<!-- /.modal-content -->
+	</div>
+	<!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+
+<!--------------------------------------------------> 
+<script type="text/javascript">
+	$('#booknows').click(function(){ 
+  //\\
+  var fieldValues = 1;
+  sessionStorage.setItem('booknowss', fieldValues);
+  //\\
+});
+
+	$('#askquot').click(function(){ 
+  //\\
+  var fieldValue = 2;
+  sessionStorage.setItem('booknowss', fieldValue);
+  //\\
+});
+</script>
+
+<!-- <script>
+  
+  $('.featured-list-carousal').owlCarousel({
+    loop:true,
+    margin:10,
+    nav:true,
+    responsive:{
+        0:{
+            items:1
+        },
+        600:{
+            items:3
+        },
+        1000:{
+            items:6
+        }
+    }
+})
+
+</script> -->
+
+<script type="text/javascript">
+
+	$(document).ready(function(){	
+		var $element = $('.owl-prev').html("");
+		var $element = $('.owl-next').html("");
+	});
+
+</script>
+
+
+<div id="myModal" class="modal fade">
+	<div class="modal-dialog">
+
+		<div class="modal-content" >
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Report for this User</h4>
+			</div>
+			<div class="modal-body"></div>
+		</div>
+		<!-- /.modal-content -->
+	</div>
+	<!-- /.modal-dialog -->
+
+</div>
+<!-- /.modal -->
+
+<script>
+	var SITE_URL='<?php echo SITE_URL; ?>/';
+	$('.savejobs').click(function(){
+		console.log('test');
+		var job=$(this).data('job');
+
+		event.preventDefault();
+		$.ajax({
+			dataType: "html",
+			type: "post",
+			evalScripts: true,
+			url: SITE_URL + 'search/savejobs',
+			data: {jobid:job},
+			beforeSend: function() {
+
+
+			},
+
+			success:function(response){
+
+				var myObj = JSON.parse(response);
+
+				if(myObj.success==1){
+
+
+					$('#'+job+'').css('color','red');
+				}else{
+					$('#'+job+'').css('color','white');
+				}
+
+
+			},
+			complete: function() {
+
+
+
+			},
+			error: function(data) {
+				alert(JSON.stringify(data));
+
+			}
+
+		});
+
+	});
+
+
+	var SITE_URL='<?php echo SITE_URL; ?>/';
+	$('.likejobs').click(function(){
+
+		var job=$(this).data('job');
+
+		event.preventDefault();
+		$.ajax({
+			dataType: "html",
+			type: "post",
+			evalScripts: true,
+			url: SITE_URL + 'search/likejobs',
+			data: {jobid:job},
+			beforeSend: function() {
+
+
+			},
+
+			success:function(response){
+
+				var myObj = JSON.parse(response);
+
+				if(myObj.success==1){
+
+
+					$('#like'+job+'').css('color','red');
+				}else{
+					$('#like'+job+'').css('color','white');
+				}
+
+
+			},
+			complete: function() {
+
+
+
+			},
+			error: function(data) {
+				alert(JSON.stringify(data));
+
+			}
+
+		});
+
+	});
+
+	var SITE_URL='<?php echo SITE_URL; ?>/';
+	$('.block').click(function(){
+
+		var job=$(this).data('job');
+
+		event.preventDefault();
+		$.ajax({
+			dataType: "html",
+			type: "post",
+			evalScripts: true,
+			url: SITE_URL + 'search/blockjobs',
+			data: {jobid:job},
+			beforeSend: function() {
+
+
+			},
+
+			success:function(response){
+
+				var myObj = JSON.parse(response);
+
+				if(myObj.success==1){
+
+
+					$('#block'+job+'').css('color','red');
+				}else{
+					$('#block'+job+'').css('color','white');
+				}
+
+
+			},
+			complete: function() {
+
+
+
+			},
+			error: function(data) {
+				alert(JSON.stringify(data));
+
+			}
+
+		});
+
+	});
+</script>
+
+
+<style>
+	/* #col_package .package ul > li {
+    text-align: center;
+} */
+	</style>

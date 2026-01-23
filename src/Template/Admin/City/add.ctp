@@ -1,0 +1,83 @@
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            City  
+              </h1>
+    </section>
+        <!-- Main content -->
+    <section class="content">
+        <div class="row">
+
+            <!-- right column -->
+            <div class="col-md-12">
+                <!-- Horizontal Form -->
+                <div class="box box-info">
+                    <div class="box-header with-border">
+                        <h3 class="box-title"><?php if(isset($Country['id'])){ echo 'Edit City Details'; }else{ echo 'Add City Details';} ?></h3>
+                    </div>
+                    <!-- /.box-header -->
+                    <!-- form start -->
+
+                    <?php echo $this->Flash->render(); ?>
+
+                        <?php echo $this->Form->create($City, array(
+
+                       'class'=>'form-horizontal',
+            'id' => 'sevice_form',
+                       'enctype' => 'multipart/form-data'
+                        )); ?>
+
+                            <div class="box-body">
+
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">State Name</label>
+                                    <div class="field col-sm-6">
+                                        <?php echo $this->Form->input('state_id', array('class' => 
+                    'longinput form-control','maxlength'=>'20','required','placeholder'=>'Country Name','required','label'=>false,'type'=>'select','options'=>$States)); ?>
+                                    </div>
+                                </div>
+                                   <div class="form-group">
+                                    <label class="col-sm-3 control-label">City Name</label>
+                                    <div class="field col-sm-6">
+                                        <?php echo $this->Form->input('name', array('class' => 
+                    'longinput form-control','maxlength'=>'20','required','placeholder'=>'State Name','required','label'=>false)); ?>
+                                    </div>
+                                </div>
+
+                          
+
+                            </div>
+                  
+
+                </div>
+                <!-- /.box-body -->
+                <div class="box-footer">
+                    <?php
+            echo $this->Html->link('Back', [
+                'action' => 'index'
+
+            ],['class'=>'btn btn-default']); ?>
+
+                        <?php
+                if(isset($transports['id'])){
+                echo $this->Form->submit(
+                    'Update', 
+                    array('class' => 'btn btn-info pull-right', 'title' => 'Update')
+                ); }else{ 
+                echo $this->Form->submit(
+                    'Add', 
+                    array('class' => 'btn btn-info pull-right', 'title' => 'Add')
+                );
+                }
+               ?>
+                </div>
+                <!-- /.box-footer -->
+                <?php echo $this->Form->end(); ?>
+            </div>
+
+        </div>
+   </section>     <!--/.col (right) -->
+</div>
+<!-- /.row -->
+

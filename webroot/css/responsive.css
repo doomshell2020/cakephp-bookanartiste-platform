@@ -1,0 +1,252 @@
+@charset "utf-8";
+
+/* CSS Document */
+
+
+
+
+
+/**
+
+ * 8.0 Media Queries
+
+ * ----------------------------------------------------------------------------
+
+ */
+
+
+
+/* Does the same thing as <meta name="viewport" content="width=device-width">,
+
+ * but in the future W3C standard way. -ms- prefix is required for IE10+ to
+
+ * render responsive styling in Windows 8 "snapped" views; IE10+ does not honor
+
+ * the meta tag. See https://core.trac.wordpress.org/ticket/25888.
+
+ */
+
+@-ms-viewport {
+
+	width: device-width;
+
+}
+
+@viewport {
+
+	width: device-width;
+
+}
+
+
+
+@media (max-width: 1599px) {
+
+}
+
+
+
+@media (max-width: 1200px) {
+.dash_heading .col-sm-7, .dash_heading .col-sm-5{ width:100% !important; text-align:center; }
+.dashboard_page .dash_contant .dash_heading h4, .dashboard_page .dash_contant .dash_heading p{ text-align:center;}
+.dash_heading .col-sm-5{ margin-top:15px;}
+
+
+}
+
+@media (max-width: 1069px) {
+#footer h3{ font-size:20px;}
+.foot-social{ padding-left:0px;}
+	
+	}
+
+
+
+
+
+@media (max-width: 991px) {
+#Pro-Summary .pmnt_dtln_btn li{ width:18% !important; text-align:right;}
+#Pro-Summary .pmnt_dtln_btn li:first-child{ width:81% !important;}
+.imghvr-push-up.my-album p , .my-album a{ font-size:18px !important;}
+[class^='imghvr-'] figcaption, [class*=' imghvr-'] figcaption{ padding:70px 10px;}
+.signup-social-inner a i{ width:35px;}
+.signup-social-inner a span{ font-size:10px;}
+.foot-social a{ margin:0px;}
+#slider .btn-primary, #slider .btn-default{ padding:10px 10px;}
+#slider h1{ font-size:45px;}  
+.slide-caption{ top:32%;}
+#slider p{ font-size:22px;}
+.progressbar li:after{ left:-13%; width:26%;}
+.dashboard_page .dash_contant .dash_right li { font-size:11px;}
+.dashboard_page .dash_contant .dash_right .left_head span{ font-size:15px;} 
+   
+
+  
+
+}
+
+
+
+
+
+@media (max-width: 767px) {
+#edit_profile #Pro-Summary .radio .radio-inline, #edit_profile #Pro-Summary .checkbox-inline{ width:25% !important;}
+	#edit_profile .nav-tabs.nav-justified{ text-align:center;}
+#edit_profile .nav-tabs.nav-justified>li{ width:32.333% !important; display:inline-block !important; min-height:94px;}
+.profile-bg a.skill{ margin-top:10px !important;}
+.dashboard_page .dash_contant .dash_right li{ font-size:14px;}
+.signup-social-inner .col-sm-12{ width:50% !important; float:left;}
+.signup-popup, .signup-popup2, .login-popup{ min-height:inherit !important;}
+.foot-social a{ padding:14px;}
+#footer{ background-color:#414c57; background-image:none; height:auto;}
+.package{ width:60%; margin:auto; margin-bottom:15px;}
+#col_so_net .netwrk-cntnt p{ min-height:63px;}
+.social-net-blog{ text-align:center;}
+/*.social-net-blog-cntnt .row{ width:50%; float:left;}*/ 
+#col_work_process{ height:auto;}
+.progressbar li.col-sm-3{ width:49% !important;}
+.progressbar li:after{ display:none;} 
+#slider-bottom p{ text-align:center;}
+#slider-bottom .text-right{ text-align:center !important;}
+.slide-caption{ position:static; background-color:#e7e6e6; padding:15px;}
+#slider h1{ font-size:45px; color:#000;}  
+#slider p{ font-size:22px; color:#000;}
+.serch-bar{ border:none; width:100%;}
+header ul li{ margin-top:0px;}
+.header-1 a.btn-default, .header-1 .btn-primary, .translate-inmenu .switcher .selected a{ margin-top:0px !important;}
+.serch-bar{ padding:10px 10px 0px;}
+#slider h1{ font-size:34px;}
+#slider p{ font-size:17px;}
+#slider .col-xs-6{ margin-bottom:10px;}
+#slider .serch-bar .form-group{ margin-bottom:0px;}
+.switcher, .switcher .option{ width:120px !important;}
+.translate-inmenu .switcher .selected a{ width:105px !important;}
+header .btn-primary, header .btn-default{ padding:10px;}
+/*.foot_socialdiv{ margin-top:80px;}*/
+}
+
+
+
+@media (max-width: 643px) {
+.package{ width:75%;}
+.header-1 a.btn-default i, .header-1 .btn-primary i{ display:none;}
+.progressbar .col-sm-3 img{ width:120px;}
+
+
+
+}
+
+@media (max-width: 576px) {
+#edit_profile #Pro-Summary .radio .radio-inline, #edit_profile #Pro-Summary .checkbox-inline{ width:50% !important;}
+.imghvr-push-up.my-album p, .my-album a { font-size:14px !important;}
+[class^='imghvr-'] figcaption, [class*=' imghvr-'] figcaption{ padding:55px 10px;}
+.question_popupdiv{ top:-15px !important;}
+#edit_profile .radio .radio-inline, #edit_profile .checkbox-inline, #edit_profile .radio .radio-inline:last-child{ width:50% !important;}
+#edit_profile .radio-inline+.radio-inline{ margin-left:0px !important;}
+.dashboard_page .dash_contant .dash_box .box_1 p{ min-height:36px;}
+.dashboard_page{ padding:10px;}
+.dashboard_page .signup-popup{ padding:10px 0px;}
+header ul li{ margin-left:0px;}
+h2 span{ font-size:24px;} 
+.package{ width:90%;}
+#col_so_net .netwrk-cntnt h6{ font-size:14px;}
+#col_so_net .netwrk-cntnt p{ font-size:13px;}
+.social-net-blog-cntnt .col-sm-2{ text-align:center;}
+#col_so_net .netwrk-cntnt h6{ text-align:center;}
+#col_so_net .netwrk-cntnt p{ text-align:center;}
+.progressbar p{ font-size:14px;}
+.progressbar .col-sm-3 img{ width:100px;}
+#slider-bottom p{ font-size:24px;}
+#slider-bottom .btn{ font-size:12px;}
+h2:before{ left:0px; right:0px; }
+#edit_profile .radio .radio-inline, #edit_profile .checkbox-inline, #edit_profile .radio .radio-inline:last-child{ font-size:12px;} 
+	}
+
+
+
+
+@media (max-width: 480px) {
+#Gallery ul.nav-pills{ text-align:center;}
+#edit_profile #Gallery .nav-pills>li>a{ width:80px;}
+#edit_profile .nav-tabs.nav-justified>li{ width:49% !important;}
+#Gallery .col-xs-6{ width:100% !important;}
+#edit_profile .col-xs-4{ width:100% !important; margin-bottom:10px;}
+.dashboard_page .dash_contant .dash_right .li_first li{ display:block; text-align:center;}
+.dashboard_page .dash_contant .dash_right .li_first li.pull-right{ float:none !important;}
+.dash_box .col-xs-6{ width:100% !important;}
+.dashboard_page .dash_contant .dash_box .box_1 p{ min-height: inherit;}
+.dashboard_page .dash_contant .dash_box .box_1{ margin-bottom:30px;}
+header .btn-primary, header .btn-default{ padding:4px;}
+header ul{ margin-top:0px;}
+header ul li:last-child{ display:block; margin-top:5px;}
+.switcher, .switcher .option{ float:right;}
+.signup-social-inner .col-sm-12{ width:100% !important;}
+h2{ font-size:24px;}
+h2:before{ top:25px;}
+.signup-popup .checkbox label, .signup-popup .radio label, .login-popup .checkbox label, .login-popup .radio label{ padding-left:0px;}
+.signup-popup .col-xs-6{ width:100% !important; margin-bottom:15px;}
+.signup-popup .form-group{ margin-bottom:0px;}
+.signup-popup .form-group .col-sm-12, .signup-popup .checkbox, .login-popup .checkbox, .login-popup .forgot, .login-popup .form-group .col-sm-12{ text-align:center;}
+.signup-popup button.btn-default{ margin-top:15px;}
+#col_package  .nav-pills>li{ margin-bottom:10px;}
+.foot-social a { padding:9px;}
+#footer h3 { font-size:18px;}
+#footer li a { margin:4px 0px;}
+#col_package h5{ font-size:19px;}
+#col_package .price{ font-size:21px;}
+.package{ width:100%;}
+.social-net-blog-cntnt .col-xs-6{ width:100% !important;}
+#col_so_net .netwrk-cntnt p{ min-height:inherit !important;}
+#slider-bottom p{ font-size:22px;}
+#slider .col-xs-6{ width:100% !important;}
+#slider h1{ font-size:22px;}
+#slider p { font-size:16px;}
+
+
+
+
+
+}
+
+@media (max-width: 359px) {
+#edit_profile .radio .radio-inline, #edit_profile .checkbox-inline, #edit_profile .radio .radio-inline:last-child{ font-size:11px;}
+#edit_profile #Perfo-Des, input[type=radio]{    margin: 1px 6px 0;}
+#footer h3 { font-size:15px;}
+#footer h4{ margin:12px 0px; font-size:15px;} 
+	.foot-social a{ background-color:transparent; padding:0px; font-size:20px; margin-right:5px; color:#fff;}
+	}
+
+
+
+/**
+
+ * 9.0 Print
+
+ * ----------------------------------------------------------------------------
+
+ */
+
+
+
+/* Retina-specific styles. */
+
+@media print,
+
+	(-o-min-device-pixel-ratio: 5/4),
+
+	(-webkit-min-device-pixel-ratio: 1.25),
+
+	(min-resolution: 120dpi) {
+
+
+
+}
+
+
+
+@media print {
+
+
+
+}
+

@@ -1,0 +1,918 @@
+<?php
+namespace App\Controller;
+
+use Cake\Core\Configure; 
+use Cake\Network\Exception\ForbiddenException;
+use Cake\Network\Exception\NotFoundException;
+use Cake\View\Exception\MissingTemplateException;
+use Cake\Auth\DefaultPasswordHasher;
+use Cake\ORM\TableRegistry;
+use Cake\Event\Event;
+use Cake\Datasource\ConnectionManager;
+use brain\brain;
+use brain\Exception;
+use Cake\Routing\Router;
+use Cake\Log\Log;
+use Cake\Filesystem\Folder;
+use Cake\Filesystem\File;
+class MessageController extends AppController
+{
+    public function initialize(){
+    parent::initialize();
+	$this->Auth->allow(['privacy','termsandconditions']);
+    }
+    
+    // Sending message to user from profile. 
+    public function sendmessage($userid='')
+    {
+	$id = $this->request->session()->read('Auth.User.id');
+	if ($this->request->is(['post', 'put']))
+	{
+	    $this->loadModel('Messages');
+	    $mentity = $this->Messages->newEntity();
+	    $userid = $this->request->data['userid'];
+	    $subject = $this->request->data['subject'];
+	    $description = $this->request->data['message'];
+	    $message_data['from_id'] = $id;
+	    $message_data['to_id'] = $userid;
+	    $message_data['subject'] = $subject;
+	    $message_data['description'] = $description;
+	    $message_data['to_box'] = 'I';
+	    $message_data['from_box'] = 'S';
+	    $message_arr = $this->Messages->patchEntity($mentity, $message_data);
+	    $savedata = $this->Messages->save($message_arr);
+	    $response['status'] = "1";
+	    $response['error_text'] = "";
+	    echo json_encode($response); die;
+	}
+	else
+	{
+	    if($userid==0)
+	    {
+		$this->set('error', "You cannot send message to yourself");
+	    }
+	    $this->set('userid', $userid);
+	}
+    }
+    
+    public function messagesnoti()
+    {
+	$this->loadModel('Messages');
+	$this->loadModel('Users');
+	$this->loadModel('Profile');
+
+	$uid = $this->request->session()->read('Auth.User.id');
+	$notifications = $this->Messages->find('all')->contain(['Users'=>['Profile']])->where(['to_id' => $uid])->where(['to_viewed_status' => 'N'])->toarray();
+	//pr($notifications);
+	$this->set('messages',$notifications);
+	
+	$users= TableRegistry::get('Messages');
+	$status="Y";
+	$con = ConnectionManager::get('default');
+	$detail = 'UPDATE `messages` SET `to_viewed_status` ="'.$status.'" WHERE `messages`.`to_id` = '. $uid;
+	$results = $con->execute($detail);
+    }
+    
+    // Inbox
+    public function inbox($type)
+    {
+	$uid = $this->request->session()->read('Auth.User.id');
+	$where = " where 1=1 ";
+	if($type=='r')
+	{
+	   $where.= " and messages.read_status= 'Y'";
+	}
+	elseif($type=='u')
+	{
+	    $where.= " and messages.read_status = 'N'";
+	}
+	
+	$where.= " and messages.to_id = '".$uid."'";
+	$where.= " and messages.to_box = 'I'";
+	//$condition['to_id'] = $uid;
+	//$condition['to_box'] = 'I';
+	
+	$this->loadModel('Messages');
+	$this->loadModel('Users');
+	$this->loadModel('Profile');
+	
+	$conn = ConnectionManager::get('default');
+	$message_qry = " SELECT messages.*, count(messages.thread_id) as total, tu.user_name as to_name, tp.profile_image as to_image, tu.email as to_email, fu.user_name as from_name, fp.profile_image as from_image, fu.email as from_email from messages LEFT JOIN users tu on tu.id=messages.to_id left join users fu on fu.id=messages.from_id left join personal_profile tp on tu.id=tp.user_id left join personal_profile fp on fu.id=fp.user_id ".$where." group by messages.thread_id";
+	$message_qe = $conn->execute($message_qry);
+	$messages = $message_qe ->fetchAll('assoc');
+	$this->set('messages',$messages);
+	
+	// Folder list
+	$uid = $this->request->session()->read('Auth.User.id');
+	$this->loadModel('Messagegroup');
+	$folders = $this->Messagegroup->find('all')->where(['user_id' => $uid])->toarray();
+	$this->set('folders',$folders);   
+    }
+    
+    
+     // Draft
+    public function draft()
+    {
+	$this->loadModel('Messages');
+	$this->loadModel('Users');
+	$this->loadModel('Profile');
+	$uid = $this->request->session()->read('Auth.User.id');
+	//$messages = $this->Messages->find('all')->contain(['Users'=>['Profile']])->where(['from_id' => $uid,'from_box'=>'D'])->group('Messages.thread_id')->toarray();
+	//$this->set('messages',$messages);
+	$where = " where 1=1 ";
+	$where.= " and messages.from_id = '".$uid."'";
+	$where.= " and messages.from_box = 'D'";
+	
+	$conn = ConnectionManager::get('default');
+	$message_qry = " SELECT messages.*, count(messages.id) as total, tu.user_name as to_name, tp.profile_image as to_image, tu.email as to_email, fu.user_name as from_name, fp.profile_image as from_image, fu.email as from_email from messages LEFT JOIN users tu on tu.id=messages.to_id left join users fu on fu.id=messages.from_id left join personal_profile tp on tu.id=tp.user_id left join personal_profile fp on fu.id=fp.user_id ".$where." group by messages.thread_id";
+	$message_qe = $conn->execute($message_qry);
+	$messages = $message_qe ->fetchAll('assoc');
+	$this->set('messages',$messages);
+    }
+    
+    // Sendbox
+    public function sentbox()
+    {
+	$this->loadModel('Messages');
+	$this->loadModel('Users');
+	$this->loadModel('Profile');
+	$uid = $this->request->session()->read('Auth.User.id');
+	//$messages = $this->Messages->find('all')->contain(['Users'=>['Profile']])->where(['from_id' => $uid,'from_box'=>'S'])->group('Messages.thread_id')->toarray();
+	//$this->set('messages',$messages);
+	$where = " where 1=1 ";
+	$where.= " and messages.from_id = '".$uid."'";
+	$where.= " and messages.from_box = 'S'";
+	
+	$conn = ConnectionManager::get('default');
+	$message_qry = " SELECT messages.*, count(messages.id) as total, tu.user_name as to_name, tp.profile_image as to_image, tu.email as to_email, fu.user_name as from_name, fp.profile_image as from_image, fu.email as from_email from messages LEFT JOIN users tu on tu.id=messages.to_id left join users fu on fu.id=messages.from_id left join personal_profile tp on tu.id=tp.user_id left join personal_profile fp on fu.id=fp.user_id ".$where." group by messages.thread_id";
+	$message_qe = $conn->execute($message_qry);
+	$messages = $message_qe ->fetchAll('assoc');
+	$this->set('messages',$messages);
+	
+	// Folder list
+	$uid = $this->request->session()->read('Auth.User.id');
+	$this->loadModel('Messagegroup');
+	$folders = $this->Messagegroup->find('all')->where(['user_id' => $uid])->toarray();
+	$this->set('folders',$folders); 
+    }
+    
+    // Starting new thread
+    public function compose($type=null, $messageid=null)
+    {
+	$userid = $this->request->session()->read('Auth.User.id');
+	if ($this->request->is(['post', 'put']))
+	{
+	    $this->loadModel('Messages');
+	    $message_id = $this->request->data['message_id'];
+	    $to_id = $this->request->data['to_id'];
+	    $subject = $this->request->data['subject'];
+	    $description = $this->request->data['description'];
+	    if($message_id > 0)
+	    {
+		$mentity = $this->Messages->get($message_id);
+	    }else
+	    {
+		$mentity = $this->Messages->newEntity();
+	    }
+	    $message_data['from_id'] = $userid;
+	    $message_data['to_id'] = $to_id;
+	    $message_data['subject'] = $subject;
+	    $message_data['description'] = $description;
+	    $message_data['to_box'] = 'I';
+	    $message_data['read_status'] = 'Y';
+	    $message_data['from_box'] = 'S';
+	    $message_arr = $this->Messages->patchEntity($mentity, $message_data);
+	    $savedata = $this->Messages->save($message_arr);
+	    $message_id = $savedata->id;
+	    
+	    // Saving mesage thread id
+	    $mentity = $this->Messages->get($message_id);
+	    $message_data['thread_id'] = $message_id;
+	    if(!empty($this->request->data['thread_id']))
+	    {
+		$message_data['thread_id'] = $this->request->data['thread_id'];
+	    }
+	    $message_arr = $this->Messages->patchEntity($mentity, $message_data);
+	    $savedata = $this->Messages->save($message_arr);
+	    
+	    $this->Flash->success(__('Message has been sent successfully'));
+	    return $this->redirect(['action' => 'sentbox']);
+	}
+	if($messageid > 0)
+	{
+	    $this->loadModel('Messages');
+	    $messages = $this->Messages->find('all')->contain(['Users'=>['Profile']])->where(['Messages.id' => $messageid])->first();
+	    $this->set('messages',$messages); 
+	    $this->set('messages',$messages); 
+	}
+    }
+    
+    
+    
+    // View Message
+    public function view($id=null)
+    {
+	if($id > 0)
+	{
+	    $where = " where messages.id='".$id."'";
+	    $conn = ConnectionManager::get('default');
+	    $message_qry = " SELECT messages.*, tu.user_name as to_name, tu.email as to_email, fu.user_name as from_name, fu.email as from_email from messages LEFT JOIN users tu on tu.id=messages.to_id left join users fu on fu.id=messages.from_id ".$where;
+	    $message_qe = $conn->execute($message_qry);
+	    $messages = $message_qe ->fetchAll('assoc');
+	    $this->set('messages',$messages);
+	    
+	    // Update Read Status
+	    $this->loadModel('Messages');
+	    $message = $this->Messages->get($id);
+	    $message_data['read_status'] = 'Y';
+	    $messages = $this->Messages->patchEntity($message, $message_data);
+	    $this->Messages->save($messages);
+	    
+	    // Folder list
+	    $uid = $this->request->session()->read('Auth.User.id');
+	    $this->loadModel('Messagegroup');
+	    $folders = $this->Messagegroup->find('all')->where(['user_id' => $uid])->toarray();
+	    $this->set('folders',$folders);   
+	}
+    }
+    
+    
+     // View Message
+    public function viewmessage($id=null)
+    {
+	if($id > 0)
+	{
+	    $where = " where messages.thread_id='".$id."'";
+	    $conn = ConnectionManager::get('default');
+	    $message_qry = " SELECT messages.*, tu.user_name as to_name, tp.profile_image as to_image, tu.email as to_email, fu.user_name as from_name, fp.profile_image as from_image, fu.email as from_email from messages LEFT JOIN users tu on tu.id=messages.to_id left join users fu on fu.id=messages.from_id left join personal_profile tp on tu.id=tp.user_id left join personal_profile fp on fu.id=fp.user_id ".$where;
+	    
+	    //echo $message_qry; die;
+	    
+	    $message_qe = $conn->execute($message_qry);
+	    $messages = $message_qe ->fetchAll('assoc');
+	    $this->set('messages',$messages);
+	    
+	    // Update Read Status
+	    $this->loadModel('Messages');
+	    $message = $this->Messages->get($id);
+	    $message_data['read_status'] = 'Y';
+	    $messages = $this->Messages->patchEntity($message, $message_data);
+	    $this->Messages->save($messages);
+	    
+	    // Folder list
+	    $uid = $this->request->session()->read('Auth.User.id');
+	    $this->loadModel('Messagegroup');
+	    $folders = $this->Messagegroup->find('all')->where(['user_id' => $uid])->toarray();
+	    $this->set('folders',$folders);   
+	}
+    }
+    
+    public function messagebox()
+    {
+	$id = $this->request->data['message_id'];
+	$where = " where messages.thread_id='".$id."'";
+	$conn = ConnectionManager::get('default');
+	$message_qry = " SELECT messages.*, tu.user_name as to_name, tp.profile_image as to_image, tu.email as to_email, fu.user_name as from_name, fp.profile_image as from_image, fu.email as from_email from messages LEFT JOIN users tu on tu.id=messages.to_id left join users fu on fu.id=messages.from_id left join personal_profile tp on tu.id=tp.user_id left join personal_profile fp on fu.id=fp.user_id ".$where;
+	
+	//echo $message_qry; die;
+	
+	$message_qe = $conn->execute($message_qry);
+	$messages = $message_qe ->fetchAll('assoc');
+	$this->set('messages',$messages);
+	
+	// Update Read Status
+	$this->loadModel('Messages');
+	$message = $this->Messages->get($id);
+	$message_data['read_status'] = 'Y';
+	$messages = $this->Messages->patchEntity($message, $message_data);
+	$this->Messages->save($messages);
+	
+	// Folder list
+	$uid = $this->request->session()->read('Auth.User.id');
+	$this->loadModel('Messagegroup');
+	$folders = $this->Messagegroup->find('all')->where(['user_id' => $uid])->toarray();
+	$this->set('folders',$folders);   
+    }
+    
+    // Reply message
+    
+    public function reply($message_id=null){
+	$this->loadModel('Messages');
+	if ($this->request->is(['post', 'put'])){
+	    $id = $this->request->session()->read('Auth.User.id');
+	    $message_id = $this->request->data['message_id'];
+	    $thread_id = $this->request->data['thread_id'];
+	    $parent_id = $this->request->data['parent_id'];
+	    $description = $this->request->data['description'];
+	    $enter_send = $this->request->data['enter_send'];
+	    if($enter_send > 0)
+	    {
+		 $this->request->session()->write('enter_send',"1");
+	    }
+	    else
+	    {
+		$this->request->session()->write('enter_send',"0");
+	    }
+	    
+	    $messages = $this->Messages->get($thread_id);
+	    /*
+	    if($id==$messages['to_id'])
+	    {
+		$message_data['to_id'] = $messages['to_id'];
+	    }
+	    else
+	    {
+		$message_data['to_id'] = $id;
+	    }
+	    */
+	    //pr($messages); die;
+	    $mentity = $this->Messages->newEntity();
+	    $message_data['from_id'] = $id;
+	    
+	    $message_data['thread_id'] = $thread_id;
+	    $message_data['parent_id'] = $parent_id;
+	    $message_data['description'] = $description;
+	    $message_data['subject'] = $messages['subject'];
+	    $message_data['to_box'] = 'I';
+	    $message_data['from_box'] = 'S';
+
+	    $message_arr = $this->Messages->patchEntity($mentity, $message_data);
+	    $savedata = $this->Messages->save($message_arr);
+	    return $this->redirect(['action' => 'viewmessage/'.$thread_id]);
+	    
+	    
+	}
+	else
+	{
+	    //$message_id = $this->request->data['message_id'];
+	    $messages = $this->Messages->get($message_id);
+	    $this->set('messages',$messages); 
+	}
+	//pr($messages);die;
+    }
+    
+    
+    
+     // Reply message
+    /*
+    public function forward($message_id=null){
+	$this->loadModel('Messages');
+	if ($this->request->is(['post', 'put'])){
+	    $id = $this->request->session()->read('Auth.User.id');
+	    $message_id = $this->request->data['message_id'];
+	    $thread_id = $this->request->data['thread_id'];
+	    $parent_id = $this->request->data['parent_id'];
+	    $description = $this->request->data['description'];
+	    $enter_send = $this->request->data['enter_send'];
+	    if($enter_send > 0)
+	    {
+		 $this->request->session()->write('enter_send',"1");
+	    }
+	    else
+	    {
+		$this->request->session()->write('enter_send',"0");
+	    }
+	    
+	    $messages = $this->Messages->get($thread_id);
+	    /*
+	    if($id==$messages['to_id'])
+	    {
+		$message_data['to_id'] = $messages['to_id'];
+	    }
+	    else
+	    {
+		$message_data['to_id'] = $id;
+	    }
+	    
+	    //pr($messages); die;
+	    $mentity = $this->Messages->newEntity();
+	    $message_data['from_id'] = $id;
+	    
+	    $message_data['thread_id'] = $thread_id;
+	    $message_data['parent_id'] = $parent_id;
+	    $message_data['description'] = $description;
+	    $message_data['subject'] = $messages['subject'];
+	    $message_data['to_box'] = 'I';
+	    $message_data['from_box'] = 'S';
+
+	    $message_arr = $this->Messages->patchEntity($mentity, $message_data);
+	    $savedata = $this->Messages->save($message_arr);
+	    return $this->redirect(['action' => 'viewmessage/'.$thread_id]);
+	}
+	else
+	{
+	    $messages = $this->Messages->get($message_id);
+	    $this->set('messages',$messages); 
+	}
+	//pr($messages);die;
+    }
+    */
+    
+    
+    // Delete Messages 
+    public function deletetemp()
+    {
+	$this->loadModel('Messages');
+	$error = '';
+	if ($this->request->is(['post', 'put']))
+	{
+	    $id = $this->request->session()->read('Auth.User.id');
+	    $message_id = $this->request->data['message_id'];
+	    $type = $this->request->data['type'];
+	    $message = $this->Messages->get($message_id);
+	    if($type=='draft')
+	    {
+		$this->Messages->delete($message);
+		$status='1';
+	    }
+	    else
+	    {
+		if($type=='inbox')
+		{
+		    $message_data['to_box'] = 'T';
+		}
+		elseif($type=='trash')
+		{
+		    if($message['from_id']==$id)
+		    {
+			$message_data['from_box'] = 'P';
+		    }
+		    else
+		    {
+			$message_data['to_box'] = 'P';
+		    }
+		}
+		else
+		{
+		    $message_data['from_box'] = 'T';
+		}
+		$messages = $this->Messages->patchEntity($message, $message_data);
+		if($this->Messages->save($messages))
+		{
+		    $status='1';
+		}
+		else
+		{
+		    $status='0';
+		}
+	    }
+	    $response['error']= $error;
+	    $response['status']=$status;
+	    echo json_encode($response); die;
+	}
+    }
+    
+    // Deleted Items 
+    function trash()
+    {
+	$this->loadModel('Messages');
+	$this->loadModel('Users');
+	$this->loadModel('Profile');
+	$uid = $this->request->session()->read('Auth.User.id');
+	//$messages = $this->Messages->find('all')->contain(['Users'=>['Profile']])->where(['from_id' => $uid,'from_box'=>'T'])->orWhere(['to_id' => $uid,'to_box'=>'T'])->toarray();
+	//$this->set('messages',$messages); 
+	
+	$where = " where 1=1 ";
+	$where.= " and messages.from_id = '".$uid."'";
+	$where.= " and messages.from_box = 'T'";
+	
+	$conn = ConnectionManager::get('default');
+	$message_qry = " SELECT messages.*, count(messages.id) as total, tu.user_name as to_name, tp.profile_image as to_image, tu.email as to_email, fu.user_name as from_name, fp.profile_image as from_image, fu.email as from_email from messages LEFT JOIN users tu on tu.id=messages.to_id left join users fu on fu.id=messages.from_id left join personal_profile tp on tu.id=tp.user_id left join personal_profile fp on fu.id=fp.user_id ".$where." group by messages.thread_id";
+	$message_qe = $conn->execute($message_qry);
+	$messages = $message_qe ->fetchAll('assoc');
+	$this->set('messages',$messages);
+	
+	
+    }
+    
+    // Fetch contacts for autocomplete
+    function fetchcontacts()
+    {
+	$uid = $this->request->session()->read('Auth.User.id');
+	$this->loadModel('Users');
+	$keyword = $this->request->data['keyword'];
+	
+	// Finding user contacts
+	$conn = ConnectionManager::get('default');
+	$frnds = "SELECT c.*, p.user_id, p.name, p.profile_image, p.location FROM `contactrequest` c inner join users u on c.to_id = u.id inner join personal_profile p on p.user_id=u.id   WHERE c.from_id='".$uid."' and c.accepted_status='Y' and u.user_name LIKE '".$keyword."%' UNION SELECT c.*, p.user_id, p.name, p.profile_image,p.location FROM `contactrequest` c inner join users u on c.from_id = u.id inner join personal_profile p on p.user_id=u.id WHERE c.to_id='".$uid."' and c.accepted_status='Y' and u.user_name LIKE '".$keyword."%'";
+	$friends = $conn->execute($frnds);
+	$friendlist = $friends ->fetchAll('assoc');
+	$this->set('friends', $friendlist);
+	
+	// Finding other people who are not in contacts
+	$conn = ConnectionManager::get('default');
+	$users = "SELECT c.*, p.user_id, p.name, p.profile_image, p.location FROM `contactrequest` c inner join users u on c.to_id = u.id inner join personal_profile p on p.user_id=u.id   WHERE c.from_id!='".$uid."' and u.user_name LIKE '".$keyword."%' UNION SELECT c.*, p.user_id, p.name, p.profile_image,p.location FROM `contactrequest` c inner join users u on c.from_id = u.id inner join personal_profile p on p.user_id=u.id WHERE c.to_id!='".$uid."' and u.user_name LIKE '".$keyword."%'";
+	$otherusers = $conn->execute($users);
+	$otheruserslist = $otherusers ->fetchAll('assoc');
+	//pr($otheruserslist); die;
+	$this->set('others', $otheruserslist);
+	//$users = $this->Users->find('all')->contain('Profile')->where(['Users.user_name LIKE ' => $keyword.'%','Users.role_id'=>TALANT_ROLEID,'Users.id NOT IN'=>$uid])->limit(10)->toarray();
+	//$this->set('users',$users); 
+    }
+    
+    // Saving message to draft
+    function savetodraft()
+    {
+	$id = $this->request->session()->read('Auth.User.id');
+	$response['message_id'] = 0;
+	if ($this->request->is(['post', 'put']))
+	{
+	    $this->loadModel('Messages');
+	    $message_id = $this->request->data['message_id'];
+	    $to_id = $this->request->data['to_id'];
+	    $subject = $this->request->data['subject'];
+	    $description = $this->request->data['description'];
+	    if($message_id > 0)
+	    {
+		$mentity = $this->Messages->get($message_id);
+	    }else
+	    {
+		$mentity = $this->Messages->newEntity();
+	    }
+	    $message_data['from_id'] = $id;
+	    $message_data['to_id'] = $to_id;
+	    $message_data['subject'] = $subject;
+	    $message_data['description'] = $description;
+	    //$message_data['to_box'] = 'I';
+	    $message_data['from_box'] = 'D';
+	    $message_data['read_status'] = 'Y';
+	    if($to_id > 0)
+	    {
+		$message_arr = $this->Messages->patchEntity($mentity, $message_data);
+		$savedata = $this->Messages->save($message_arr);
+		$message_id = $savedata->id;
+		$response['message_id'] = $message_id;
+	    }
+	    $response['status'] = "1";
+	    $response['error_text'] = "";
+	    echo json_encode($response); die;
+	}
+    }
+    
+    // Creating Personal Folder
+    public function createfolder($id=null)
+    {
+	$id = $this->request->session()->read('Auth.User.id');
+	if ($this->request->is(['post', 'put']))
+	{
+	    $this->loadModel('Messagegroup');
+	    $folder_name = $this->request->data['folder_name'];
+	    $mentity = $this->Messagegroup->newEntity();
+	    $message_data['user_id'] = $id;
+	    $message_data['folder_name'] = $folder_name;
+	    $message_arr = $this->Messagegroup->patchEntity($mentity, $message_data);
+	    $savedata = $this->Messagegroup->save($message_arr);
+	    $message_id = $savedata->id;
+	    $this->Flash->success(__('Folder has been created successfully'));
+	    return $this->redirect(['action' => 'folders']);
+	}
+    }
+    
+    // Showing all Users forlders
+    public function folders($id=null)
+    {
+	$this->loadModel('Messagegroup');
+	$uid = $this->request->session()->read('Auth.User.id');
+	$folders = $this->Messagegroup->find('all')->where(['user_id' => $uid])->toarray();
+	$this->set('folders',$folders);   
+    }
+    
+    // Deleting the folder
+    public function deletefolder()
+    {
+	$this->loadModel('Messagegroup');
+	$this->loadModel('Messages');
+	$folder_id = $this->request->data['folder_id'];
+	$uid = $this->request->session()->read('Auth.User.id');
+	// getting message count
+	//echo $folder_id;
+	$total_message = $this->Messages->find('all')->where(['from_folder_id' =>$folder_id,'from_box'=>'F'])->orWhere(['to_folder_id' => $folder_id,'to_box'=>'F'])->count();
+	//echo $total_message; die;
+	if($total_message > 0)
+	{
+	    // Cannot delete this folder
+	    $response['status'] = "0";
+	    $response['error_text'] = "This folder is associated with some of the Messages Please remove them first.";
+	}
+	else
+	{
+	    $folder = $this->Messagegroup->get($folder_id);
+	    $this->Messagegroup->delete($folder);
+	    $response['status'] = "1";
+	    $response['error_text'] = "Folder has been deleted successfully";
+	}
+	
+	echo json_encode($response); die;
+    }
+    
+    function actions()
+    {
+	//pr($this->request); die;
+	$action = $this->request->data['action'];
+	if($action=='folders')
+	{
+	    $this->movetofolder();
+	}
+	elseif($action=='delete')
+	{
+	    $this->deletethreadtmp();
+	}
+	elseif($action=='markread')
+	{
+	    $this->updatereadstatus('Y');
+	}
+	elseif($action=='markunread')
+	{
+	    $this->updatereadstatus('N');
+	}
+    }
+    
+    
+    function updatereadstatus($status)
+    {
+	$this->loadModel('Messages');
+	$uid = $this->request->session()->read('Auth.User.id');
+	$threads = $this->request->data['thread_id'];
+	$folder_id = $this->request->data['folder_id'];
+	$type = $this->request->data['type'];
+	//$message = $this->Messages->get($message_id);
+	$redirect = 'inbox';
+	if($type=='s')
+	{
+	    $redirect = 'sentbox';
+	}
+	elseif($type=='i')
+	{
+	    $redirect = 'inbox';
+	}
+	elseif($type=='t')
+	{
+	    $redirect = 'trash';
+	}
+	
+	if($status=='Y')
+	{
+	    $message = " Messages has been marked as Read";
+	}
+	else
+	{
+	    $message = " Messages has been marked as UnRead";
+	}
+	
+	if(count($threads) > 0)
+	{
+	    foreach($threads as $thread_id){
+		// Update read status
+		$con = ConnectionManager::get('default');
+		$detail = 'UPDATE `messages` SET `read_status`="'.$status.'" WHERE `messages`.`thread_id` = '. $thread_id;
+		$results = $con->execute($detail);
+	    }
+	    $this->Flash->success(__($message));
+	    return $this->redirect(['action' => $redirect]); 
+	}
+	else
+	{
+	    $redirect = '';
+	    $this->Flash->success(__('No Message selected to delete'));
+	    return $this->redirect(['action' => $redirect]); 
+	}
+    }
+    
+    // Delete thread message to trash
+    function deletethreadtmp()
+    {
+	$this->loadModel('Messages');
+	$uid = $this->request->session()->read('Auth.User.id');
+	$threads = $this->request->data['thread_id'];
+	$folder_id = $this->request->data['folder_id'];
+	$type = $this->request->data['type'];
+	//$message = $this->Messages->get($message_id);
+	$redirect = 'inbox';
+	if(count($threads) > 0)
+	{
+	    foreach($threads as $thread_id){
+		if($type=='d')
+		{
+		    $con = ConnectionManager::get('default');
+		    $detail = 'Delete from `messages` WHERE `messages`.`thread_id` = '. $thread_id;
+		    $results = $con->execute($detail);
+		    $redirect = 'draft';
+		}
+		else
+		{
+		    if($type=='i')
+		    {
+			$con = ConnectionManager::get('default');
+			$detail = 'UPDATE `messages` SET `to_box`="T" WHERE `messages`.`thread_id` = '. $thread_id;
+			$results = $con->execute($detail);
+			$redirect = 'inbox';
+		    }
+		    elseif($type=='t')
+		    {
+			if($message['from_id']==$id)
+			{
+			    $con = ConnectionManager::get('default');
+			    $detail = 'UPDATE `messages` SET `from_box`="P" WHERE `messages`.`thread_id` = '. $thread_id;
+			    $results = $con->execute($detail);
+			}
+			else
+			{
+			    $con = ConnectionManager::get('default');
+			    $detail = 'UPDATE `messages` SET `to_box`="P" WHERE `messages`.`thread_id` = '. $thread_id;
+			    $results = $con->execute($detail);
+			}
+			$redirect = 'trash';
+		    }
+		    else
+		    {
+			$con = ConnectionManager::get('default');
+			$detail = 'UPDATE `messages` SET `from_box`="T" WHERE `messages`.`thread_id` = '. $thread_id;
+			$results = $con->execute($detail);
+			$redirect = 'sentbox';
+		    }
+		}
+		
+	    }
+	    $this->Flash->success(__('Message has been deleted'));
+	    return $this->redirect(['action' => $redirect]); 
+	}
+	else
+	{
+	    $redirect = '';
+	    $this->Flash->success(__('No Message selected to delete'));
+	    return $this->redirect(['action' => $redirect]); 
+	}
+    }
+    
+    // Moved to folder
+    public function movetofolder()
+    {
+	$this->loadModel('Messages');
+	$uid = $this->request->session()->read('Auth.User.id');
+	$threads = $this->request->data['thread_id'];
+	$folder_id = $this->request->data['folder_id'];
+	$type = $this->request->data['type'];
+	//$message = $this->Messages->get($message_id);
+	$redirect = 'inbox';
+	if(count($threads) > 0)
+	{
+	    foreach($threads as $thread_id){
+		if($folder_id > 0){
+		    if($type=='s'){
+		    // $message_data['from_box'] = 'F';
+		    // $message_data['from_folder_id'] = $folder_id;
+			$con = ConnectionManager::get('default');
+			$detail = 'UPDATE `messages` SET `from_folder_id` ="'.$folder_id.'",`from_box`="F" WHERE `messages`.`thread_id` = '. $thread_id;
+			$results = $con->execute($detail);
+		    }
+		    else
+		    {	
+			//$message_data['to_box'] = 'F';
+		    // $message_data['to_folder_id'] = $folder_id;
+			$con = ConnectionManager::get('default');
+			$detail = 'UPDATE `messages` SET `to_folder_id` ="'.$folder_id.'",`to_box`="F" WHERE `messages`.`thread_id` = '. $thread_id;
+			$results = $con->execute($detail);
+		    }
+		    $redirect = 'folderview/'.$folder_id;
+		}
+		else
+		{
+		    // move to inbox
+		    if($type=='i')
+		    {
+		    // $message_data['to_box'] = 'I';
+		    // $message_data['to_folder_id'] = '0';
+			$redirect = 'inbox';
+			// Updating message
+			$con = ConnectionManager::get('default');
+			$detail = 'UPDATE `messages` SET `to_folder_id` ="0",`to_box`="I" WHERE `messages`.`thread_id` = '. $thread_id;
+			$results = $con->execute($detail);
+		    }
+		    // move to sent box
+		    elseif($type=='s')
+		    {
+		    // $message_data['from_box'] = 'S';
+			//$message_data['from_folder_id'] = '0';
+			$redirect = 'sentbox';
+			// Updating message
+			$con = ConnectionManager::get('default');
+			$detail = 'UPDATE `messages` SET `from_folder_id` ="0",`from_box`="S" WHERE `messages`.`thread_id` = '. $thread_id;
+			$results = $con->execute($detail);
+		    }
+	// 	    elseif($type=='t')
+		    {	
+		    
+		    }
+		}
+	    }
+	    $this->Flash->success(__('Message has been moved to folder'));
+	    return $this->redirect(['action' => $redirect]); 
+	}
+	else
+	{
+	    $redirect = '';
+	    $this->Flash->success(__('No Message selected to move'));
+	    return $this->redirect(['action' => $redirect]); 
+	}
+	
+	//$messages = $this->Messages->patchEntity($message, $message_data);
+	//pr($messages); die;
+	//$this->Messages->save($messages);
+	
+    }
+    
+    // View all messages of the folder
+    public function folderview($folder_id=null)
+    {
+	$this->loadModel('Messages');
+	$this->loadModel('Users');
+	$this->loadModel('Profile');
+	// Folder information 
+	$this->loadModel('Messagegroup');
+	$folder_info = $this->Messagegroup->get($folder_id);
+	$this->set('folder_info',$folder_info);
+	
+	$uid = $this->request->session()->read('Auth.User.id');
+	
+	//$messages = $this->Messages->find('all')->contain(['Users'=>['Profile']])->where(['from_folder_id' => $folder_id,'from_box'=>'F'])->orWhere(['to_folder_id' => $folder_id,'to_box'=>'F'])->group('Messages.thread_id')->toarray();
+	//$this->set('messages',$messages);
+	
+	$where = " where 1=1 ";
+	$where.= " and ((messages.from_folder_id = '".$folder_id."' and messages.from_box='F' ) OR (messages.to_folder_id = '".$folder_id."' and messages.to_box='F' ))";
+	$conn = ConnectionManager::get('default');
+	$message_qry = " SELECT messages.*, count(messages.id) as total, tu.user_name as to_name, tp.profile_image as to_image, tu.email as to_email, fu.user_name as from_name, fp.profile_image as from_image, fu.email as from_email from messages LEFT JOIN users tu on tu.id=messages.to_id left join users fu on fu.id=messages.from_id left join personal_profile tp on tu.id=tp.user_id left join personal_profile fp on fu.id=fp.user_id ".$where." group by messages.thread_id";
+	$message_qe = $conn->execute($message_qry);
+	$messages = $message_qe ->fetchAll('assoc');
+	$this->set('messages',$messages);
+	
+	// Folder list
+	$uid = $this->request->session()->read('Auth.User.id');
+	$this->loadModel('Messagegroup');
+	$folders = $this->Messagegroup->find('all')->where(['user_id' => $uid])->toarray();
+	$this->set('folders',$folders); 
+    }
+    
+    // Searching of Messages
+    public function search(){
+	//pr($this->request->data); die;
+	$uid = $this->request->session()->read('Auth.User.id');
+	$where = " where 1=1 ";
+	$type = $this->request->data['search_type'];
+	$search_keyword = $this->request->data['search_keyword'];
+	
+	if($type=='inbox')
+	{
+	    $where.= " and messages.to_id = '".$uid."'";
+	    $where.= " and messages.to_box = 'I'";
+	}
+	elseif($type=='sent')
+	{
+	    $where.= " and messages.from_id = '".$uid."'";
+	    $where.= " and messages.from_box = 'S'";
+	}
+	elseif($type=='draft')
+	{
+	    $where.= " and messages.from_id = '".$uid."'";
+	    $where.= " and messages.from_box = 'D'";
+	}
+	elseif($type=='pfolders')
+	{
+	    $where.= " and ((messages.from_folder_id = '".$folder_id."' and messages.from_box='F' ) OR (messages.to_folder_id = '".$folder_id."' and messages.to_box='F' ))";
+	}
+	elseif($type=='deleted')
+	{
+	    $where.= " and messages.from_id = '".$uid."'";
+// 	    $where.= " and messages.from_box = 'T'";
+	}
+	else
+	{
+	    
+	}
+	$where.= " and (messages.subject LIKE '%".$search_keyword."%' OR (messages.description LIKE '%".$search_keyword."%')) ";
+	
+	// Query for searching 
+	$conn = ConnectionManager::get('default');
+	$message_qry = " SELECT messages.*, count(messages.thread_id) as total, tu.user_name as to_name, tp.profile_image as to_image, tu.email as to_email, fu.user_name as from_name, fp.profile_image as from_image, fu.email as from_email from messages LEFT JOIN users tu on tu.id=messages.to_id left join users fu on fu.id=messages.from_id left join personal_profile tp on tu.id=tp.user_id left join personal_profile fp on fu.id=fp.user_id ".$where." group by messages.thread_id";
+	//echo $message_qry; die;
+	$message_qe = $conn->execute($message_qry);
+	$messages = $message_qe ->fetchAll('assoc');
+	$this->set('messages',$messages);
+	
+	$this->set('search_keyword',$search_keyword);
+	$this->set('type',$type);
+	
+	
+	
+    }
+    
+    
+    
+    
+    
+    
+
+
+
+
+
+}

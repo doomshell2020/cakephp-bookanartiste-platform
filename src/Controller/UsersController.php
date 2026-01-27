@@ -58,10 +58,12 @@ class UsersController extends AppController
 			}
 		}
 	}
+
 	public  function _setPassword($password)
 	{
 		return (new DefaultPasswordHasher)->hash($password);
 	}
+
 	public function beforeFilter(Event $event)
 	{
 		parent::beforeFilter($event);
@@ -71,88 +73,100 @@ class UsersController extends AppController
 	public function changepassword()
 	{
 		$this->loadModel('Users');
+		$this->loadModel('Profile');
+		$this->loadModel('Templates');
+
 		$id = $this->request->session()->read('Auth.User.id');
+
 		if ($this->request->is(['post', 'put'])) {
-			$this->request->data['email'] = $this->request->data['email'];
+			// pr($this->request->data);
+
+			// Identify user using current password
+			$this->request->data['email'] = $this->request->session()->read('Auth.User.email');
 			$user = $this->Auth->identify($this->request->data);
-			if ($user) {
 
-				$Pack = $this->Users->get($id);
-				$pass = $this->_setPassword($this->request->data['newpassword']);
-				$chpass['password'] = $pass;
-				$chpass['cpassword'] = $this->request->data['confirmpassword'];
-				$changepass = $this->Users->patchEntity($Pack, $chpass);
-				if ($this->Users->save($changepass)) {
-					$this->loadmodel('Profile');
-					$guardianprofile = $this->Profile->find('all')->where(['user_id' => $id])->first();
-					$guardianname = $guardianprofile['guadian_name'];
-					$usermail = $Pack['email'];
-					$user = $Pack['user_name'];
-					$userpass = $chpass['cpassword'];
-					$guardianemail = $guardianprofile['guardian_email'];
-					$usergender = $guardianprofile['gender'];
-					if ($usergender == 'm') {
-						$usergendername = 'Mr';
-					} else if ($usergender == 'f') {
-						$usergendername = 'Ms';
-					}
-					if ($usergender == 'o') {
-						$usergendername = 'Mr/Ms';
-					}
-					if ($usergender == 'm') {
-						$usergenderhis = 'his';
-					} else if ($usergender == 'f') {
-						$usergenderhis = 'her';
-					}
-					if ($usergender == 'o') {
-						$usergenderhis = 'his/her';
-					}
-					$birthdate = date("Y-m-d", strtotime($guardianprofile['dob']));
-					$from = new \DateTime($birthdate);
-					$to   = new \DateTime('today');
-					$age_diff = $from->diff($to)->y;
-					if ($age_diff > 1 && $age_diff < 18) {
+			if (!$user) {
+				$this->Flash->error(__('Current Password Is Wrong!!'));
+				return $this->redirect(['action' => 'changepassword']);
+			}
 
-						$this->loadmodel('Templates');
-						$profile = $this->Templates->find('all')->where(['Templates.id' => GUARDIANMAILCHANGEPASS])->first();
-						$subject = $profile['subject'];
-						$from = $profile['from'];
-						$fromname = $profile['fromname'];
-						$to  = $guardianemail;
-						$formats = $profile['description'];
-						$site_url = SITE_URL;
-						$message1 = str_replace(
-							array('{Name}', '{user}', '{usermail}', '{userpass}', '{site_url}', '{Useractivation}'),
-							array($guardianname, $user, $usermail, $userpass, $site_url, $useractivation),
-							$formats
-						);
-						$message = stripslashes($message1);
-						$message = '
-						<!DOCTYPE HTML>
-						<html>
-						<head>
-							<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-							<title>Mail</title>
-						</head>
-						<body style="padding:0px; margin:0px;font-family:Arial,Helvetica,sans-serif; font-size:13px;">
-							' . $message1 . '
-						</body>
-						</html>';
-						$headers = 'MIME-Version: 1.0' . "\r\n";
-						$headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
-						$headers .= 'From: ' . $fromname . ' <' . $from . '>' . "\r\n";
-						$emailcheck = mail($to, $subject, $message, $headers);
-					}
+			// Fetch user record
+			$userEntity = $this->Users->get($id);
+
+			// Validate confirm password
+			if ($this->request->data['newpassword'] != $this->request->data['confirmpassword']) {
+				$this->Flash->error(__('New password and confirm password do not match.'));
+				return $this->redirect(['action' => 'changepassword']);
+			}
+
+			// Strong password validation
+			if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/', $this->request->data['newpassword'])) {
+				$this->Flash->error(__('Password must be at least 8 characters long and include uppercase, lowercase, number and special character.'));
+				return $this->redirect(['action' => 'changepassword']);
+			}
+
+			// Set new password
+			$hashedPassword = $this->_setPassword($this->request->data['newpassword']);
+			$userEntity->password = $hashedPassword;
+			$userEntity->cpassword = $this->request->data['newpassword'];
+
+			if ($this->Users->save($userEntity)) {
+
+				$template = $this->Templates->find()
+					->where(['Templates.id' => GUARDIANMAILCHANGEPASS])
+					->first();
+
+				// Get guardian profile
+				$profile = $this->Profile->find()
+					->where(['user_id' => $id])
+					->first();
+				// pr($userEntity['email']);exit;
+
+				if ($template) {
+
+					$messageBody = str_replace(
+						['{Name}', '{user}', '{usermail}', '{userpass}', '{site_url}', '{Useractivation}'],
+						[
+							$profile->guadian_name,
+							$userEntity->user_name,
+							$userEntity->email,
+							$this->request->data['confirmpassword'],
+							SITE_URL,
+							''
+						],
+						$template->description
+					);
+
+					$message = '
+							<!DOCTYPE HTML>
+							<html>
+							<body style="font-family:Arial;font-size:13px;">
+								' . stripslashes($messageBody) . '
+							</body>
+							</html>';
+
+					$headers  = "MIME-Version: 1.0\r\n";
+					$headers .= "Content-type:text/html; charset=iso-8859-1\r\n";
+					$headers .= "From: {$template->fromname} <{$template->from}>\r\n";
+					$mail = $this->Email->send($userEntity->email, $template->subject, $message);
+					// $isSent = mail($userEntity->email, $template->subject, $message, $headers);
+					// pr($mail);exit;
 					$this->Auth->logout();
 					$this->Flash->success(__('Password Changed Successfully'));
 					return $this->redirect(['action' => 'login']);
+				} else {
+					$this->Flash->error(__('Email Template Availatble but password has been changed'));
+					return $this->redirect($this->referer());
 				}
-			} else {
-				$this->Flash->error(__('Current Passowrd Is Wrong!!'));
-				return $this->redirect(['action' => 'changepassword']);
 			}
+
+			// Logout after password change
+			$this->Auth->logout();
+			$this->Flash->success(__('Password Changed Successfully'));
+			return $this->redirect(['action' => 'login']);
 		}
 	}
+
 
 	public function getphonecode()
 	{
@@ -396,53 +410,53 @@ class UsersController extends AppController
 	}
 
 	// private function canLogin($user_pack, $user)
-		// {
-		// 	$userId = $user['id'];
-		// 	$currentIp = $_SERVER['REMOTE_ADDR'];
-		// 	$sessionToken = bin2hex(random_bytes(32)); // Generate a unique token
-		// 	$userAgent = $_SERVER['HTTP_USER_AGENT'];
+	// {
+	// 	$userId = $user['id'];
+	// 	$currentIp = $_SERVER['REMOTE_ADDR'];
+	// 	$sessionToken = bin2hex(random_bytes(32)); // Generate a unique token
+	// 	$userAgent = $_SERVER['HTTP_USER_AGENT'];
 
-		// 	// Get login attempts
-		// 	$loginAttempts = $this->Loginusercheck->find()
-		// 		->where(['user_id' => $userId])
-		// 		->count();
+	// 	// Get login attempts
+	// 	$loginAttempts = $this->Loginusercheck->find()
+	// 		->where(['user_id' => $userId])
+	// 		->count();
 
-		// 	$lastLogin = $this->Loginusercheck->find()
-		// 		->where(['user_id' => $userId, 'ip' => $currentIp])
-		// 		->first();
+	// 	$lastLogin = $this->Loginusercheck->find()
+	// 		->where(['user_id' => $userId, 'ip' => $currentIp])
+	// 		->first();
 
-		// 	// If no login attempts or same IP, allow login
-		// 	if ($loginAttempts == 0 || $lastLogin['id']) {
-		// 		return true;
-		// 	}
+	// 	// If no login attempts or same IP, allow login
+	// 	if ($loginAttempts == 0 || $lastLogin['id']) {
+	// 		return true;
+	// 	}
 
-		// 	// Restrict non-talent users from multiple logins
-		// 	if ($user['role_id'] == 3 && $loginAttempts > 0) {
-		// 		$session = $this->request->session();
-		// 		$session->write('login_fail_user_id', $userId);
-		// 		$this->Flash->error(__('You cannot log in on multiple devices. Please log out from another device before attempting to log in again.'), ['key' => 'login_fail_non_talent']);
-		// 		return false;
-		// 		return $this->redirect($this->referer());
-		// 	}
+	// 	// Restrict non-talent users from multiple logins
+	// 	if ($user['role_id'] == 3 && $loginAttempts > 0) {
+	// 		$session = $this->request->session();
+	// 		$session->write('login_fail_user_id', $userId);
+	// 		$this->Flash->error(__('You cannot log in on multiple devices. Please log out from another device before attempting to log in again.'), ['key' => 'login_fail_non_talent']);
+	// 		return false;
+	// 		return $this->redirect($this->referer());
+	// 	}
 
-		// 	// Calculate the allowed login count
-		// 	$userCountLogged = $loginAttempts + 1;
-		// 	// pr($userCountLogged);
-		// 	// pr($user_pack['number_of_email']);
-		// 	// pr($user_pack['multipal_email_login']);exit;
-		// 	// Check multiple login restrictions
-		// 	if ($user_pack['multipal_email_login'] == 'N') {
-		// 		$this->Flash->error(__('Purchase a recruiter package to use multiple logins.'));
-		// 		return false;
-		// 		return $this->redirect(['controller' => 'users', 'action' => 'login']);
-		// 	} elseif ($userCountLogged > $user_pack['number_of_email']) {
-		// 		$session = $this->request->session();
-		// 		$session->write('login_fail_user_id', $userId);
-		// 		$this->Flash->error(__('You cannot log in on multiple devices. Please log out from another device before attempting to log in again.'), ['key' => 'login_fail_non_talent']);
-		// 		return false;
-		// 		return $this->redirect($this->referer());
-		// 	}
-		// 	return true;
+	// 	// Calculate the allowed login count
+	// 	$userCountLogged = $loginAttempts + 1;
+	// 	// pr($userCountLogged);
+	// 	// pr($user_pack['number_of_email']);
+	// 	// pr($user_pack['multipal_email_login']);exit;
+	// 	// Check multiple login restrictions
+	// 	if ($user_pack['multipal_email_login'] == 'N') {
+	// 		$this->Flash->error(__('Purchase a recruiter package to use multiple logins.'));
+	// 		return false;
+	// 		return $this->redirect(['controller' => 'users', 'action' => 'login']);
+	// 	} elseif ($userCountLogged > $user_pack['number_of_email']) {
+	// 		$session = $this->request->session();
+	// 		$session->write('login_fail_user_id', $userId);
+	// 		$this->Flash->error(__('You cannot log in on multiple devices. Please log out from another device before attempting to log in again.'), ['key' => 'login_fail_non_talent']);
+	// 		return false;
+	// 		return $this->redirect($this->referer());
+	// 	}
+	// 	return true;
 	// }
 
 	private function isUserBlocked($user_pack, $user)
@@ -1009,27 +1023,31 @@ class UsersController extends AppController
 		if ($this->request->is(['post', 'put'])) {
 			// pr($this->request->data);exit;
 
-			if (isset($this->request->data['g-recaptcha-response'])) {
-				$captcha = $this->request->data['g-recaptcha-response'];
-			}
-			$secretKey = "6LcQUZwpAAAAAPDM1dYqNuazsa7Bl6MlP1KucN7r";
-			$ip = $_SERVER['REMOTE_ADDR'];
-			$url = 'https://www.google.com/recaptcha/api/siteverify?secret=' . urlencode($secretKey) .  '&response=' . urlencode($captcha);
-			$response = file_get_contents($url);
-			$responseKeys = json_decode($response, true);
 
-			if (!$responseKeys["success"]) {
-				$this->Flash->error(__('Captcha entry is incorrect, try again'));
-				// return $this->redirect(['action' => 'login']);
-				return $this->redirect($this->referer());
+			$isLocalhost = in_array($_SERVER['HTTP_HOST'], ['localhost', '127.0.0.1']);
+
+			if (!$isLocalhost) {
+
+				if (isset($this->request->data['g-recaptcha-response'])) {
+					$captcha = $this->request->data['g-recaptcha-response'];
+				}
+
+				$secretKey = "6LcQUZwpAAAAAPDM1dYqNuazsa7Bl6MlP1KucN7r";
+				$ip = $_SERVER['REMOTE_ADDR'];
+				$url = 'https://www.google.com/recaptcha/api/siteverify?secret=' . urlencode($secretKey) .  '&response=' . urlencode($captcha);
+				$response = file_get_contents($url);
+				$responseKeys = json_decode($response, true);
+
+				if (!$responseKeys["success"]) {
+					$this->Flash->error(__('Captcha entry is incorrect, try again'));
+					return $this->redirect($this->referer());
+				}
 			}
 
 			if ($this->request->data['password'] != $this->request->data['cpassword']) {
 				$this->Flash->error(__('The passwords do not match. Please ensure the "Confirm Password" field matches the "Password" field.'));
 				return $this->redirect($this->referer());
 			}
-
-
 
 			$name = ucwords(strtolower($this->request->data['name']));
 			$email = $this->request->data['email'];
@@ -1261,15 +1279,10 @@ class UsersController extends AppController
 		$feature_info['number_of_email'] = $pcakgeinformation['number_of_email'];
 		$feature_info['multipal_email_login'] = $pcakgeinformation['multipal_email_login'];
 
-		
+
 		$feature_info['non_telent_number_of_private_message'] = $pcakgeinformation['non_telent_number_of_private_message'];
 		$feature_info['number_of_email'] = $pcakgeinformation['number_of_email'];
 		$feature_info['multipal_email_login'] = $pcakgeinformation['multipal_email_login'];
-
-
-
-
-
 
 		// recruiter validity
 		$daysofrecur = $pcakgeinformation['validity_days'];
@@ -1281,7 +1294,6 @@ class UsersController extends AppController
 		$subscription_info['subscription_date'] = date('Y-m-d H:i:s');
 		$subscription_arr = $this->Subscription->patchEntity($subscription, $subscription_info);
 		$savedata = $this->Subscription->save($subscription_arr);
-
 
 		// Non Telent data
 		$this->loadModel('Settings');
@@ -1481,8 +1493,8 @@ class UsersController extends AppController
 				->first();
 			if (!$userLoginRecord) {
 				$userLoginRecord = $this->Loginusercheck->find()
-				->where(['user_id' => $userId,'session_token' => ''])
-				->first();
+					->where(['user_id' => $userId, 'session_token' => ''])
+					->first();
 			}
 			if ($userLoginRecord) {
 				$this->Loginusercheck->delete($userLoginRecord);

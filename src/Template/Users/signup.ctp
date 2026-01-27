@@ -104,7 +104,10 @@
               <?php echo $this->Form->hidden('ref_by', array('value' => (isset($ref_by)) ? $ref_by : '')); ?>
             </div>
           </div>
-          <div id="html_element" class="login_capcher"></div>
+
+          <?php if ($_SERVER['HTTP_HOST'] != 'localhost') { ?>
+            <div id="html_element" class="login_capcher"></div>
+          <?php } ?>
 
           <div class="form-group">
             <div class="col-sm-12">

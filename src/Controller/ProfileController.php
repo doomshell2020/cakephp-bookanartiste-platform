@@ -2005,6 +2005,7 @@ class ProfileController extends AppController
 		$this->loadModel('Settings');
 		$this->loadModel('Packfeature');
 		$id = $this->request->session()->read('Auth.User.id');
+		$roleId = $this->request->session()->read('Auth.User.role_id');
 
 		// $packfeature = $this->Packfeature->find('all')->where(['Packfeature.user_id' => $id])->order(['Packfeature.id' => 'DESC'])->first();
 		// $packfeature = $this->Packfeature->find('all')
@@ -2018,8 +2019,20 @@ class ProfileController extends AppController
 		// 	->order(['id' => 'DESC'])
 		// 	->first();
 		$packfeature = $this->activePackage(); // comes from add controller data is from Packfeature table
-
 		$this->set('packfeature', $packfeature);
+
+		// Determine limits and usage
+		if ($roleId == NONTALANT_ROLEID) {
+			$total_audioLimit = $packfeature['non_telent_number_of_audio'];
+			$total_usedCount = $packfeature['number_audio_used'] + $packfeature['non_telent_number_of_audio_used'];
+		} else {
+			$total_audioLimit = $packfeature['number_audio'];
+			$total_usedCount = $packfeature['number_audio_used'] + $packfeature['non_telent_number_of_audio_used'];
+		}
+
+		$total_remainingSlots = $total_audioLimit - $total_usedCount;
+		$this->set('total_remainingSlots',$total_remainingSlots);
+
 
 		$profile = $this->Profile->find('all')->contain(['Users', 'Enthicity', 'City', 'State', 'Country'])->where(['user_id' => $id])->first();
 		$this->set('profile', $profile);
@@ -2056,7 +2069,6 @@ class ProfileController extends AppController
 				$this->loadModel('Setting');
 
 				$user_id = $this->request->session()->read('Auth.User.id');
-				$roleId = $this->request->session()->read('Auth.User.role_id');
 
 				// Get the active package for the user
 				// $packfeature = $this->Packfeature->find('all')
@@ -2228,6 +2240,8 @@ class ProfileController extends AppController
 		$this->loadModel('Settings');
 		$this->loadModel('Packfeature');
 		$id = $this->request->session()->read('Auth.User.id');
+		$roleId = $this->request->session()->read('Auth.User.role_id');
+
 		// pr($this->request->data);exit;
 		// $packfeature = $this->Packfeature->find('all')->where(['Packfeature.user_id' => $id])->order(['Packfeature.id' => 'ASC'])->first();
 
@@ -2243,6 +2257,18 @@ class ProfileController extends AppController
 		// 	->first();
 		$packfeature = $this->activePackage(); // comes from add controller data is from Packfeature table
 		$this->set('packfeature', $packfeature);
+		$total_used = 0;
+		// Fetch video limits based on user role
+		if ($roleId == NONTALANT_ROLEID) {
+			$total_number_video = $packfeature['non_telent_number_of_video'];
+			$total_used = $packfeature['non_telent_number_of_video_used'] + $packfeature['number_video_used'];
+		} else {
+			$total_number_video = $packfeature['number_video'];
+			$total_used = $packfeature['non_telent_number_of_video_used'] + $packfeature['number_video_used'];
+		}
+
+		$total_limit_remaining = $total_number_video - $total_used;
+		$this->set('total_limit_remaining', $total_limit_remaining);
 
 
 		$profile = $this->Profile->find('all')->contain(['Users', 'Enthicity', 'City', 'State', 'Country'])->where(['user_id' => $id])->first();
@@ -2417,6 +2443,7 @@ class ProfileController extends AppController
 				return $this->redirect(SITE_URL . '/galleries/video');
 			}
 		}
+
 		$this->set('Video', $Video);
 	}
 
@@ -2905,6 +2932,7 @@ class ProfileController extends AppController
 				$packfeature_id = $packfeature['id'];
 				$number_of_photo = 0;
 				$number_of_photo_used = 0;
+				// pr($packfeature);exit;
 				// Get the number of images uploaded by the user
 				if ($this->request->session()->read('Auth.User.role_id') == NONTALANT_ROLEID) {
 					$number_of_photo = $packfeature['non_telent_totalnumber_of_images'];
@@ -2915,6 +2943,8 @@ class ProfileController extends AppController
 				}
 				$limit_remaining = $number_of_photo - $number_of_photo_used;
 
+				// pr($number_of_photo);
+				// pr($number_of_photo_used);
 				// pr($limit_remaining);exit;
 
 				$romm = count($this->request->data['imagename']);
@@ -3023,6 +3053,23 @@ class ProfileController extends AppController
 
 		// $total_gallery_images = $this->Galleryimage->find('all')->where(['Galleryimage.user_id' => $id])->order(['Galleryimage.id' => 'DESC'])->toarray();
 		// pr($total_gallery_images);exit;
+
+
+		$number_of_photo = 0;
+		$number_of_photo_used = 0;
+		// Get the number of images uploaded by the user
+		if ($this->request->session()->read('Auth.User.role_id') == NONTALANT_ROLEID) {
+			$number_of_photo = $packfeature['non_telent_totalnumber_of_images'];
+			$number_of_photo_used = $packfeature['non_telent_totalnumber_of_images_used'] + $packfeature['number_of_photo_used'];
+		} else {
+			$number_of_photo = $packfeature['number_of_photo'];
+			$number_of_photo_used = $packfeature['number_of_photo_used'] + $packfeature['non_telent_totalnumber_of_images_used'];
+		}
+		$limit_remaining = $number_of_photo - $number_of_photo_used;
+		$this->set('photo_limit_remaining', $limit_remaining);
+
+		// pr($limit_remaining);exit;
+
 
 		//Some changes by rupam
 		$total_gallery_images = $this->Galleryimage->find('all')

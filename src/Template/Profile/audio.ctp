@@ -50,17 +50,23 @@ $audioLimit = 100;
                         <div class="galleryTopBar pva_tab">
                             <?php echo  $this->element('galleryprofile') ?>
                             <?php $uid = $this->request->session()->read('Auth.User.id'); ?>
-                                
-                                <a class="btn btn-primary" style="margin-left:15px;" data-toggle="modal"
-                                data-target="#addaudio">Add
-                                Audio</a>
-                                
-                                <a class="btn btn-default" href="<?php echo SITE_URL; ?>/viewaudios/<?php echo $uid; ?>">
-                                    Already uploaded audios
-                                </a>
+
+                            <?php if ($total_remainingSlots > 0) { ?>
+                                 <a class="btn btn-primary" style="margin-left:15px;" data-toggle="modal"
+                                data-target="#addaudio">Add Audio</a>
+                            <?php } else { ?>
+                                <button
+                                    class="btn btn-primary"
+                                    onclick="showError('You have reached the limit of <?= $total_remainingSlots ?> audio. Please delete an existing audio to create a new one');">Add Audio
+                                </button>
+                            <?php } ?>
+
+                            <a class="btn btn-default" href="<?php echo SITE_URL; ?>/viewaudios/<?php echo $uid; ?>">
+                                Already uploaded audios
+                            </a>
                             <a class="btn btn-primary"
                                 style="margin-left:11px; background:#f4434d !important" data-toggle="modal"
-                                data-target="#audiolist"> 
+                                data-target="#audiolist">
                                 Audio Sites List</a>
                         </div>
                         <div class="tab-content">
@@ -134,7 +140,7 @@ $audioLimit = 100;
             </div>
             <div class="modal-body">
 
-                <?php $videolist = array('jiosaavn.com','soundcloud.com', 'pandora.com', 'reverbnation.com', 'tidal.com', 'music.yandex.ru', 'itunes', ' amazon music', 'google play', 'spotify.com', 'playlist.com', 'myspace.com', 'hypem.com', 'youtube.com', 'tindeck.com', 'freesound.org', 'archive.org', 'discogs.com', 'musica.com', 'mp3.zing.vn', 'deezer.com', 'zaycev.net', 'bandcamp.com', 'nhaccuatui.com', 'letras.mus.br', 'pitchfork.com', 'last.fm', 'zamunda.net', 'xiami.com', 'palcomp3.com', 'cifraclub.com.br', 'biqle.ru', 'suamusica.com.br', 'ulub.pl');
+                <?php $videolist = array('jiosaavn.com', 'soundcloud.com', 'pandora.com', 'reverbnation.com', 'tidal.com', 'music.yandex.ru', 'itunes', ' amazon music', 'google play', 'spotify.com', 'playlist.com', 'myspace.com', 'hypem.com', 'youtube.com', 'tindeck.com', 'freesound.org', 'archive.org', 'discogs.com', 'musica.com', 'mp3.zing.vn', 'deezer.com', 'zaycev.net', 'bandcamp.com', 'nhaccuatui.com', 'letras.mus.br', 'pitchfork.com', 'last.fm', 'zamunda.net', 'xiami.com', 'palcomp3.com', 'cifraclub.com.br', 'biqle.ru', 'suamusica.com.br', 'ulub.pl');
                 $count = 1;
                 for ($i = 0; $i < count($videolist); $i++) {
 
@@ -263,4 +269,15 @@ $audioLimit = 100;
         e.preventDefault();
         $('#dynamyModal').modal('show').find('.modal-body').load($(this).attr('href'));
     });
+</script>
+
+<script>
+    function showError(error) {
+        BootstrapDialog.alert({
+            size: BootstrapDialog.SIZE_SMALL,
+            title: "<img title='Book an Artiste' src='<?php echo SITE_URL; ?>/images/book-an-artiste-logo.png' alt='Book an Artiste' class='img-circle' height='26' width='26'> - Notification !",
+            message: "<h5>" + error + "</h5>"
+        });
+        return false;
+    }
 </script>

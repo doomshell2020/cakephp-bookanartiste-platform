@@ -1,4 +1,5 @@
 <?php
+
 /**
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
@@ -15,6 +16,7 @@
 ?>
 <!DOCTYPE html>
 <html>
+
 <head>
     <?= $this->Html->charset() ?>
     <title>
@@ -29,6 +31,7 @@
     <?= $this->fetch('css') ?>
     <?= $this->fetch('script') ?>
 </head>
+
 <body>
     <div id="container">
         <div id="header">
@@ -44,4 +47,5 @@
         </div>
     </div>
 </body>
+
 </html>

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
@@ -17,8 +18,8 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
 ?>
  <?= $this->element('admin/header') ?>
 <?= $this->element('admin/menu') ?>
-    <?php //echo $this->Flash->render() ?>
+    <?php //echo $this->Flash->render()
+      ?>
    
-       <?= $this->fetch('content') ?>
-   
-    <?= $this->element('admin/footer') ?>
+   <?= $this->fetch('content') ?>
+<?= $this->element('admin/footer') ?>

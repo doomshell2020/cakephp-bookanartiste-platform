@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Artist-Job-Portal </title>
+  <title>Artist-Job-Portal</title>
   <!-- Tell the browser to be responsive to screen width -->
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
   <!-- Bootstrap 3.3.6 -->
@@ -45,8 +45,6 @@
       <p class="login-box-msg">Sign in to start your session</p>
       <?= $this->fetch('content') ?>
 
-
-
       <!-- /.social-auth-links -->
       <!--
     <a style="cursor:pointer;"  data-toggle="modal" data-target="#myModal">I forgot my password</a><br> -->
@@ -57,10 +55,7 @@
   </div>
   <!-- /.login-box -->
 
-
   <?php echo $user; ?>
-
-
 
   <!-- Modal -->
   <div class="modal fade" id="myModal" role="dialog">
@@ -102,14 +97,5 @@
 
   <?= $this->Html->script('admin/icheck.min.js') ?>
 
-
-
-
-
-
-
-
-
 </body>
-
 </html>

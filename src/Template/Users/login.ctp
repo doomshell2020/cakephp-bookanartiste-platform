@@ -1,28 +1,3 @@
-<style>
-  svg {
-    border-right: 1px solid #ccc;
-    padding: 12px 0;
-    width: 50px;
-    height: 43px;
-    vertical-align: -16px;
-    text-align: center;
-  }
-
-  .bg-face {
-    background-color: #fff;
-  }
-
-  .signup-social-inner a {
-
-    color: #000;
-
-  }
-
-  .bg-g-plus {
-    background-color: #fff;
-  }
-</style>
-
 <section id="page_login">
   <div class="container">
     <div class="row">
@@ -133,7 +108,6 @@
                 <script type="text/javascript">
                   $(document).ready(function() {
                     $(".bg-vk").on('click', function() {
-                      // alert()
                       $('#vk_auth').css("display", 'block');
 
                     });
@@ -240,6 +214,7 @@ X2CQ IVWL UIFS BQCY WNTL ASYB DOBK MUJF
 Two-factor authentication is save on the the iphone 
 -->
 <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+
 <script>
   // Initialize the Facebook SDK with your App ID
   window.fbAsyncInit = function() {
@@ -312,6 +287,32 @@ Two-factor authentication is save on the the iphone
     });
   }
 </script>
+
+<style>
+  svg {
+    border-right: 1px solid #ccc;
+    padding: 12px 0;
+    width: 50px;
+    height: 43px;
+    vertical-align: -16px;
+    text-align: center;
+  }
+
+  .bg-face {
+    background-color: #fff;
+  }
+
+  .signup-social-inner a {
+
+    color: #000;
+
+  }
+
+  .bg-g-plus {
+    background-color: #fff;
+  }
+</style>
+
 
 
 <!-- New Fb Login Start -->

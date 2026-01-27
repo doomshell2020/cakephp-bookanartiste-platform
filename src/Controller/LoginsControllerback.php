@@ -53,7 +53,7 @@ class LoginsController extends AppController
 
 		if ($this->request->is('post')) {
 
-			// pr($_POST);exit;
+			pr($_POST);exit;
 
 			if (isset($_POST['g-recaptcha-response'])) {
 				$captcha = $_POST['g-recaptcha-response'];

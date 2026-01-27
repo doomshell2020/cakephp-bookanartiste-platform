@@ -149,9 +149,9 @@
                                                       <button
                                                           id="save_btn"
                                                           type="submit"
-                                                          onclick='return validateImages();'
                                                           class="btn btn-primary"
-                                                          onclick='this.form.action="profile/images/<?php echo empty($id) ? 0 : $id; ?>/save";'>
+                                                          onclick='this.form.action="<?php echo SITE_URL; ?>/profile/images/<?php echo empty($id) ? 0 : $id; ?>/save"; 
+                                                            return validateImages("<?php echo $photo_limit_remaining; ?>");'>
                                                           Upload Image
                                                       </button>
                                                   </div>
@@ -174,7 +174,17 @@
                                                           }
                                                       });
 
-                                                      function validateImages() {
+                                                      function validateImages(photo_limit_remaining) {
+
+                                                          photo_limit_remaining = parseInt(photo_limit_remaining);
+
+                                                          // Check upload limit first
+                                                          if (photo_limit_remaining <= 0) {
+                                                              showError("Your image upload limit has been reached. Please upgrade your package to upload more images.")
+                                                            //   alert("Your image upload limit has been reached. Please upgrade your package to upload more images.");
+                                                              return false;
+                                                          }
+
                                                           const files = fileInput.files;
                                                           if (!files.length) {
                                                               alert("Please select at least one valid image.");
@@ -182,8 +192,8 @@
                                                               return false;
                                                           }
 
-                                                        //   const id = "<?php echo empty($id) ? 0 : $id; ?>";
-                                                        //   fileInput.closest("form").action = `profile/images/${id}/save`;
+                                                          //   const id = "<?php echo empty($id) ? 0 : $id; ?>";
+                                                          //   fileInput.closest("form").action = `profile/images/${id}/save`;
                                                           return true;
                                                       }
                                                   </script>
@@ -205,12 +215,13 @@
                                                   <div class="button_group">
 
                                                       <button id="save_btn" type="submit" class="btn btn-default"
-                                                          onclick='this.form.action="profile/images/<?php echo empty($id) ? 0 : $id; ?>/save";'>
+                                                          onclick='this.form.action="<?php echo SITE_URL; ?>/profile/images/<?php echo empty($id) ? 0 : $id; ?>/save"; 
+                                                          return validateImages("<?php echo $photo_limit_remaining; ?>");'>
                                                           Save
                                                       </button>
 
                                                       <button id="submit_btn" type="button"
-                                                          onclick="window.location.href='/viewgalleries'"
+                                                          onclick="window.location.href='<?php echo SITE_URL; ?>/viewgalleries'"
                                                           class="btn btn-default">
                                                           <?php echo __('Submit'); ?>
                                                       </button>

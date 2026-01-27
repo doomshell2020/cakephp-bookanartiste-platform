@@ -3035,11 +3035,11 @@ class SearchController extends AppController
       //pr($activejobs);
       $this->set('activejobs', $activejobs);
 
+      $userid = $this->request->session()->read('Auth.User.id');
       $askquote = $this->JobQuote->find('all')->where(['user_id' => $userid])->toarray();
       $this->set('askquote', $askquote);
       $setting = $this->Settings->find('all')->first();
       $this->set('ping_amt', $setting['ping_amt']);
-      $userid = $this->request->session()->read('Auth.User.id');
       $bookjob = $this->JobApplication->find('all')->where(['user_id' => $userid])->toarray();
       $this->set('alliedjobs', $bookjob);
       $user_id = $this->request->session()->read('Auth.User.id');
@@ -3690,7 +3690,7 @@ class SearchController extends AppController
 
    public function profilesearch($is_reset = null)
    {
-      // pr($this->request->query);
+      // pr($_SESSION);
       // die;
 
       if ($is_reset == "reset") {
@@ -3745,6 +3745,7 @@ class SearchController extends AppController
       $id = $this->request->session()->read('Auth.User.id');
       // $packlimit = $this->Packfeature->find('all')->where(['Packfeature.user_id' => $this->request->session()->read('Auth.User.id')])->first();
       $packlimit = $this->activePackage(); // Fetch package details
+      // pr($packlimit);exit;
 
       $numberofaskquoteperjob = $packlimit['ask_for_quote_request_per_job'];
       $this->set('numberofaskquoteperjob', $numberofaskquoteperjob);
@@ -3754,7 +3755,7 @@ class SearchController extends AppController
       // pr($activejobs);exit;
       $this->set('activejobs', $activejobs);
 
-      $askquote = $this->JobQuote->find('all')->where(['user_id' => $userid])->toarray();
+      $askquote = $this->JobQuote->find('all')->where(['user_id' => $id])->toarray();
       $this->set('askquote', $askquote);
 
       $user_id = $this->request->session()->read('Auth.User.id');

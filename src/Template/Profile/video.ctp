@@ -31,6 +31,7 @@
 // if($this->request->session()->read('Auth.User.role_id') == NONTALANT_ROLEID){ // $videolimit = $packfeature['non_talent_video_list_total']; // }else{ // $videolimit = $packfeature['talent_video_list_total']; // } 
 
 $videoLimit = 100;
+// pr($total_limit_remaining);exit;
 ?>
 <!----------------------editprofile-strt----------------------->
 <section id="edit_profile" class="gallery_tab">
@@ -51,7 +52,15 @@ $videoLimit = 100;
 
                             <?php $uid = $this->request->session()->read('Auth.User.id'); ?>
 
-                            <a class="btn btn-primary" data-toggle="modal" data-target="#addvideo">Add Videos</a>
+                            <?php if ($total_limit_remaining > 0) { ?>
+                                <a class="btn btn-primary" data-toggle="modal" data-target="#addvideo">Add Videos</a>
+                            <?php } else { ?>
+                                <button
+                                    class="btn btn-primary"
+                                    onclick="showError('You have reached the limit of <?= $total_limit_remaining ?> videos. Please delete an existing video to create a new one');">Add Videos
+                                </button>
+                            <?php } ?>
+
                             <!-- <div style="margin-left: 15px;"> -->
                             <a style="margin-left: 15px;" class="btn btn-default pull-right" href="<?php echo SITE_URL; ?>/viewvideos/<?php echo $uid; ?>">
                                 Already uploaded videos
@@ -198,7 +207,7 @@ $videoLimit = 100;
                             'class' => 'form-control videourl',
                             'placeholder' => 'Url',
                             // 'id' => 'videourl',
-                            'oninput'=>'processVideoUrl()',
+                            'oninput' => 'processVideoUrl()',
                             'required' => true,
                             'label' => false,
                             'type' => 'url'
@@ -298,15 +307,15 @@ $videoLimit = 100;
 
     $(document).ready(function() {
         var value = $("input[name='videourl']").val();
-        console.log("Value using name attribute:", value);
+        // console.log("Value using name attribute:", value);
 
     });
 
     function processVideoUrl() {
         let Urlvalue = $(".videourl").val(); // Get Urlvalue from #videourl
-        console.log('call this =>', Urlvalue);
+        // console.log('call this =>', Urlvalue);
         var value = $("input[name='videourl']").val();
-        console.log("Value using name attribute:", value);
+        // console.log("Value using name attribute:", value);
 
         $.ajax({
             type: "post",
@@ -360,4 +369,15 @@ $videoLimit = 100;
             // }, 1500);
         });
     });
+</script>
+
+<script>
+    function showError(error) {
+        BootstrapDialog.alert({
+            size: BootstrapDialog.SIZE_SMALL,
+            title: "<img title='Book an Artiste' src='<?php echo SITE_URL; ?>/images/book-an-artiste-logo.png' alt='Book an Artiste' class='img-circle' height='26' width='26'> - Notification !",
+            message: "<h5>" + error + "</h5>"
+        });
+        return false;
+    }
 </script>

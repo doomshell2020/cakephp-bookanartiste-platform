@@ -720,6 +720,7 @@ class ProfileController extends AppController
 		$this->loadModel('Vques');
 		$this->loadModel('Voption');
 
+
 		$conn = ConnectionManager::get('default');
 		$current_user_id = $this->request->session()->read('Auth.User.id');
 		$current_user = $this->Users->find('all')->where(['Users.id' => $current_user_id])->first();
@@ -790,10 +791,13 @@ class ProfileController extends AppController
 			}
 		}
 
+		// $profile = $this->Profile->find('all')->contain(['Users', 'Enthicity', 'City', 'Country'])->where(['user_id' => $profile_id])->first();
+		// $profile = $this->Profile->find('all')->contain(['Users', 'Enthicity', 'City', 'Country', 'State'])->where(['Profile.id' => $profile_id])->first();
+		// // pr($profile);exit;
+		// $this->set('profile', $profile);
+
 		/*
 		//$this->response->type('pdf');
-		$profile = $this->Profile->find('all')->contain(['Users','Enthicity','City','Country'])->where(['user_id' => $profile_id])->first();
-		$this->set('profile', $profile);
 		$contentadminskillset = $this->Skillset->find('all')->contain(['Skill'])->where(['Skillset.user_id' => $profile_id])->order(['Skillset.id' => 'DESC'])->toarray();
 		$this->set('skillofcontaint', $contentadminskillset);
 		
@@ -826,17 +830,13 @@ class ProfileController extends AppController
 		if ($profilecounter <= $packfeature['number_of_contact_details'] || in_array("1", $valid)) {
 
 			$this->response->type('pdf');
-			$profile = $this->Profile->find('all')->contain(['Users', 'Enthicity', 'City', 'Country'])->where(['user_id' => $profile_id])->first();
+			$profile = $this->Profile->find('all')->contain(['Users', 'Enthicity', 'City', 'Country'])->where(['Profile.id' => $profile_id])->first();
 			$this->set('profile', $profile);
 			$contentadminskillset = $this->Skillset->find('all')->contain(['Skill'])->where(['Skillset.user_id' => $profile_id])->order(['Skillset.id' => 'DESC'])->toarray();
 			$this->set('skillofcontaint', $contentadminskillset);
 
 			if (in_array("1", $valid)) {
 			} else {
-
-
-
-
 				if ($count == '') {
 					$this->request->data['user_id'] = $current_user_id;
 					$this->request->data['profile_id'] = $profile_id;
@@ -2031,7 +2031,7 @@ class ProfileController extends AppController
 		}
 
 		$total_remainingSlots = $total_audioLimit - $total_usedCount;
-		$this->set('total_remainingSlots',$total_remainingSlots);
+		$this->set('total_remainingSlots', $total_remainingSlots);
 
 
 		$profile = $this->Profile->find('all')->contain(['Users', 'Enthicity', 'City', 'State', 'Country'])->where(['user_id' => $id])->first();
@@ -4199,6 +4199,7 @@ class ProfileController extends AppController
 		$this->set('activities', $activities);
 
 		$profile = $this->Profile->find('all')->contain(['Users', 'Enthicity', 'City', 'Country', 'State'])->where(['user_id' => $id])->first();
+		// pr($profile);die;
 		$this->set('profile', $profile);
 
 		$profile_title = $this->Professinal_info->find('all')->select(['Professinal_info.profile_title', 'Professinal_info.areyoua', 'Professinal_info.performing_month', 'Professinal_info.performing_year'])->where(['user_id' => $id])->first();

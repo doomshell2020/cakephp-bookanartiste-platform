@@ -395,7 +395,7 @@
 								// }
 
 								function updateToMonth(event) {
-									let fromDateInput = event; 
+									let fromDateInput = event;
 									let fromDateValue = fromDateInput.value;
 									let toDateInput = fromDateInput.closest('li').nextElementSibling?.querySelector('input[name="exp[date_to][]"]');
 									if (toDateInput) {
@@ -491,64 +491,38 @@
 
 							<?php } ?>
 
-							<?php //if ($skillofcontaint) { ?>
-								<div class="form-group">
-									<label for="" class="col-sm-12 control-label">Manage Talent Portfolio:</label>
-								</div>
-								<div class="form-group">
-									<div class="col-sm-12">
-										<div class="table-responsive">
-											<div class="multi-field-wrappertalentport">
-												<table class="table table-bordered">
-													<thead>
-														<tr>
-															<th>Talent Name</th>
-															<th>URL</th>
-															<th></th>
-														</tr>
-													</thead>
-													<tbody class="video_containertalentport">
-														<?php if (count($videoprofiletalentpro) > 0) { ?>
-															<?php foreach ($videoprofiletalentpro as $proptalent) { //pr($prop);
-															?>
-																<tr class="video_detailstalentport">
-
-																	<td> <?php echo $this->Form->input('name', array('value' => $proptalent['name'], 'class' => 'form-control', 'placeholder' => 'Name of artiste managed by you', 'id' => 'name', 'label' => false, 'name' => 'datatalentport[talentport][]')); ?>
-																		<input type="hidden" value="<?php echo $proptalent['id'] ?>" name="datatalentport[hid][]" />
-																	</td>
-																	</td>
-
-																	<td> <?php echo $this->Form->input('url', array(
-																				'value' => $proptalent['url'],
-																				'class' => 'form-control',
-																				'placeholder' => 'Bookanartiste link',
-																				'id' => 'url',
-																				'type' => 'text',
-																				'label' => false,
-																				'name' => 'datatalentport[talentporturl][]',
-																				'pattern' => 'http://www\.bookanartiste\.com\/(.+)|https://www\.bookanartiste\.com\/(.+)',
-																				'oninvalid' => "this.setCustomValidity('URL should start from http://www.bookanartiste.com')",
-																				"oninput" => "setCustomValidity('')"
-																			)); ?></td>
-																	<td>
-																		<a href="javascript:void(0);" class="deletepersonaltalentpro btn remove-fieldtalentport btn-danger btn-block" data-val="<?php echo $proptalent['id'] ?>"><i class="fa fa-remove"></i> Delete</a>
-
-																		<!--<button type="button" onclick="delete_detials(<?php //echo $prop['id'] 
-																															?>);" class="btn remove-field btn-danger btn-block"><i class="fa fa-remove"></i> Delete</button>-->
-
-																	</td>
-
-																</tr>
-															<?php }
-														} else { ?>
+							<?php //if ($skillofcontaint) { 
+							?>
+							<div class="form-group">
+								<label for="" class="col-sm-12 control-label">Manage Talent Portfolio:</label>
+							</div>
+							<div class="form-group">
+								<div class="col-sm-12">
+									<div class="table-responsive">
+										<div class="multi-field-wrappertalentport">
+											<table class="table table-bordered">
+												<thead>
+													<tr>
+														<th>Talent Name</th>
+														<th>URL</th>
+														<th></th>
+													</tr>
+												</thead>
+												<tbody class="video_containertalentport">
+													<?php if (count($videoprofiletalentpro) > 0) { ?>
+														<?php foreach ($videoprofiletalentpro as $proptalent) { //pr($prop);
+														?>
 															<tr class="video_detailstalentport">
 
-																<td> <?php echo $this->Form->input('name', array('class' => 'form-control', 'placeholder' => 'Name of artiste managed by you', 'id' => 'name', 'label' => false, 'name' => 'datatalentport[talentport][]')); ?>
+																<td> <?php echo $this->Form->input('name', array('value' => $proptalent['name'], 'class' => 'form-control', 'placeholder' => 'Name of artiste managed by you', 'id' => 'name', 'label' => false, 'name' => 'datatalentport[talentport][]')); ?>
+																	<input type="hidden" value="<?php echo $proptalent['id'] ?>" name="datatalentport[hid][]" />
+																</td>
 																</td>
 
 																<td> <?php echo $this->Form->input('url', array(
+																			'value' => $proptalent['url'],
 																			'class' => 'form-control',
-																			'placeholder' => 'bookanartiste link',
+																			'placeholder' => 'Bookanartiste link',
 																			'id' => 'url',
 																			'type' => 'text',
 																			'label' => false,
@@ -557,35 +531,63 @@
 																			'oninvalid' => "this.setCustomValidity('URL should start from http://www.bookanartiste.com')",
 																			"oninput" => "setCustomValidity('')"
 																		)); ?></td>
-
 																<td>
 																	<a href="javascript:void(0);" class="deletepersonaltalentpro btn remove-fieldtalentport btn-danger btn-block" data-val="<?php echo $proptalent['id'] ?>"><i class="fa fa-remove"></i> Delete</a>
 
+																	<!--<button type="button" onclick="delete_detials(<?php //echo $prop['id'] 
+																														?>);" class="btn remove-field btn-danger btn-block"><i class="fa fa-remove"></i> Delete</button>-->
+
 																</td>
+
 															</tr>
+														<?php }
+													} else { ?>
+														<tr class="video_detailstalentport">
 
-														<?php } ?>
+															<td> <?php echo $this->Form->input('name', array('class' => 'form-control', 'placeholder' => 'Name of artiste managed by you', 'id' => 'name', 'label' => false, 'name' => 'datatalentport[talentport][]')); ?>
+															</td>
 
-													</tbody>
+															<td> <?php echo $this->Form->input('url', array(
+																		'class' => 'form-control',
+																		'placeholder' => 'bookanartiste link',
+																		'id' => 'url',
+																		'type' => 'text',
+																		'label' => false,
+																		'name' => 'datatalentport[talentporturl][]',
+																		'pattern' => 'http://www\.bookanartiste\.com\/(.+)|https://www\.bookanartiste\.com\/(.+)',
+																		'oninvalid' => "this.setCustomValidity('URL should start from http://www.bookanartiste.com')",
+																		"oninput" => "setCustomValidity('')"
+																	)); ?></td>
 
+															<td>
+																<a href="javascript:void(0);" class="deletepersonaltalentpro btn remove-fieldtalentport btn-danger btn-block" data-val="<?php echo $proptalent['id'] ?>"><i class="fa fa-remove"></i> Delete</a>
 
-													<tfoot>
-														<tr>
-															<td colspan="7" style="text-align:right"><a type="button" class="btn-primary add-fieldtalentport pull-right">Add </a></td>
-
+															</td>
 														</tr>
 
+													<?php } ?>
 
-													</tfoot>
-												</table>
-											</div>
+												</tbody>
 
+
+												<tfoot>
+													<tr>
+														<td colspan="7" style="text-align:right"><a type="button" class="btn-primary add-fieldtalentport pull-right">Add </a></td>
+
+													</tr>
+
+
+												</tfoot>
+											</table>
 										</div>
-									</div>
-									<div class="col-sm-4"></div>
-								</div>
 
-							<?php //} ?>
+									</div>
+								</div>
+								<div class="col-sm-4"></div>
+							</div>
+
+							<?php //} 
+							?>
 
 							<?php // Start Manage Talent portfolio 
 							?>
@@ -621,103 +623,110 @@
 							?>
 
 
-							<?php //if ($contentadminskillsetpersonnel) { ?>
-								<div class="form-group">
+							<?php //if ($contentadminskillsetpersonnel) { 
+							?>
+							<div class="form-group">
 
-									<label for="" class="col-sm-12 control-label">Personnel Details:</label>
+								<label for="" class="col-sm-12 control-label">Personnel Details:</label>
 
-								</div>
-								<div class="form-group">
-									<div class="col-sm-12">
-										<div class="table-responsive">
-											<div class="multi-field-wrapperpersonneldet">
-												<table class="table table-bordered">
-													<thead>
-														<tr>
-															<th>Talent Name</th>
-															<th>URL</th>
-															<th></th>
-														</tr>
-													</thead>
-													<tbody class="video_containerpersonneldet">
-														<?php if (count($videoprofilepersoneeldet) > 0) { ?>
-															<?php foreach ($videoprofilepersoneeldet as $proppersonal) { //pr($prop);
-															?>
-																<tr class="video_detailspersonneldet">
-
-																	<td> <?php echo $this->Form->input('name', array('value' => $proppersonal['name'], 'class' => 'form-control', 'placeholder' => 'Member of band, group, team', 'id' => 'name', 'label' => false, 'name' => 'datapersonneldet[personaldetname][]')); ?>
-																		<input type="hidden" value="<?php echo $proppersonal['id'] ?>" name="datapersonneldet[hid][]" />
-																	</td>
-																	</td>
-
-																	<td> <?php echo $this->Form->input('url', array(
-																				'value' => $proppersonal['url'],
-																				'class' => 'form-control',
-																				'placeholder' => 'Bookanartiste link',
-																				'id' => 'url',
-																				'type' => 'text',
-																				'label' => false,
-																				'name' => 'datapersonneldet[personaldeturl][]',
-																				'pattern' => 'http://www\.bookanartiste\.com\/(.+)|https://www\.bookanartiste\.com\/(.+)',
-																				'oninvalid' => "this.setCustomValidity('URL should start from http://www.bookanartiste.com')",
-																				"oninput" => "setCustomValidity('')"
-																			)); ?></td>
-																	<td>
-																		<a href="javascript:void(0);" class="deletepersonaldet btn remove-fieldpersonneldet btn-danger btn-block" data-val="<?php echo $proppersonal['id'] ?>"><i class="fa fa-remove"></i> Delete</a>
-
-																		<!--<button type="button" onclick="delete_detials(<?php //echo $prop['id'] 
-																															?>);" class="btn remove-field btn-danger btn-block"><i class="fa fa-remove"></i> Delete</button>-->
-
-																	</td>
-
-																</tr>
-															<?php }
-														} else { ?>
+							</div>
+							<div class="form-group">
+								<div class="col-sm-12">
+									<div class="table-responsive">
+										<div class="multi-field-wrapperpersonneldet">
+											<table class="table table-bordered">
+												<thead>
+													<tr>
+														<th>Talent Name</th>
+														<th>URL</th>
+														<th></th>
+													</tr>
+												</thead>
+												<tbody class="video_containerpersonneldet">
+													<?php if (count($videoprofilepersoneeldet) > 0) { ?>
+														<?php foreach ($videoprofilepersoneeldet as $proppersonal) { //pr($prop);
+														?>
 															<tr class="video_detailspersonneldet">
 
-																<td> <?php echo $this->Form->input('name', array('class' => 'form-control', 'placeholder' => 'Member of band, group, team', 'id' => 'name', 'label' => false, 'name' => 'datapersonneldet[personaldetname][]')); ?>
+																<td> <?php echo $this->Form->input('name', array('value' => $proppersonal['name'], 'class' => 'form-control', 'placeholder' => 'Member of band, group, team', 'id' => 'name', 'label' => false, 'name' => 'datapersonneldet[personaldetname][]')); ?>
+																	<input type="hidden" value="<?php echo $proppersonal['id'] ?>" name="datapersonneldet[hid][]" />
+																</td>
 																</td>
 
-																<td> <?php echo $this->Form->input('url', array(
-																			'class' => 'form-control',
-																			'placeholder' => 'Bookanartiste link',
-																			'id' => 'url',
-																			'type' => 'text',
-																			'label' => false,
-																			'name' => 'datapersonneldet[URLpersonaldeturl',
-																			'pattern' => 'http://www\.bookanartiste\.com\/(.+)|https://www\.bookanartiste\.com\/(.+)',
-																			'oninvalid' => "this.setCustomValidity('URL should start from http://www.bookanartiste.com')",
-																			"oninput" => "setCustomValidity('')"
-																		)); ?></td>
+																<td>
+																	<?php
+																	echo $this->Form->input('url', [
+																		'value' => $proppersonal['url'],
+																		'class' => 'form-control',
+																		'name' => 'datapersonneldet[personaldeturl][]',
+																		'placeholder' => 'https://www.bookanartiste.com/your-profile',
+																		'id' => 'url',
+																		'type' => 'url',
+																		'label' => false,
+																		'pattern' => '^https?:\/\/www\.bookanartiste\.com\/.+$',
+																		'oninvalid' => "this.setCustomValidity('URL must start with https://www.bookanartiste.com/')",
+																		'oninput' => "this.setCustomValidity('')"
+																	]);
+																	?>
 
+																</td>
 																<td>
 																	<a href="javascript:void(0);" class="deletepersonaldet btn remove-fieldpersonneldet btn-danger btn-block" data-val="<?php echo $proppersonal['id'] ?>"><i class="fa fa-remove"></i> Delete</a>
 
+																	<!--<button type="button" onclick="delete_detials(<?php //echo $prop['id'] 
+																														?>);" class="btn remove-field btn-danger btn-block"><i class="fa fa-remove"></i> Delete</button>-->
+
 																</td>
+
 															</tr>
+														<?php }
+													} else { ?>
+														<tr class="video_detailspersonneldet">
 
-														<?php } ?>
+															<td> <?php echo $this->Form->input('name', array('class' => 'form-control', 'placeholder' => 'Member of band, group, team', 'id' => 'name', 'label' => false, 'name' => 'datapersonneldet[personaldetname][]')); ?>
+															</td>
 
-													</tbody>
+															<td> <?php echo $this->Form->input('url', array(
+																		'class' => 'form-control',
+																		'placeholder' => 'Bookanartiste link',
+																		'name' => 'datapersonneldet[URLpersonaldeturl',
+																		'id' => 'url',
+																		'type' => 'url',
+																		'label' => false,
+																		'pattern' => '^https?:\/\/www\.bookanartiste\.com\/.+$',
+																		'oninvalid' => "this.setCustomValidity('URL must start with https://www.bookanartiste.com/')",
+																		'oninput' => "this.setCustomValidity('')"
+																	)); ?></td>
 
+															<td>
+																<a href="javascript:void(0);" class="deletepersonaldet btn remove-fieldpersonneldet btn-danger btn-block" data-val="<?php echo $proppersonal['id'] ?>"><i class="fa fa-remove"></i> Delete</a>
 
-													<tfoot>
-														<tr>
-															<td colspan="7" style="text-align:right"><a type="button" class="btn-primary add-fieldpersonneldet pull-right">Add </a></td>
-
+															</td>
 														</tr>
 
+													<?php } ?>
 
-													</tfoot>
-												</table>
-											</div>
+												</tbody>
 
+
+												<tfoot>
+													<tr>
+														<td colspan="7" style="text-align:right"><a type="button" class="btn-primary add-fieldpersonneldet pull-right">Add </a></td>
+
+													</tr>
+
+
+												</tfoot>
+											</table>
 										</div>
-									</div>
-									<div class="col-sm-4"></div>
-								</div>
 
-							<?php //} ?>
+									</div>
+								</div>
+								<div class="col-sm-4"></div>
+							</div>
+
+							<?php //} 
+							?>
 
 
 

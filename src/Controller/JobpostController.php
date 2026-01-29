@@ -258,12 +258,13 @@ class JobpostController extends AppController
 
 			// pr($subscriptions);exit;
 			$currentPackages = ['PR' => null, 'RC' => null, 'RE' => null];
+			
 			if (!empty($subscriptions)) {
 				foreach ($subscriptions as $subscription) {
 					$packageType = $subscription['package_type'];
 					$package = null;
 
-					if ($packageType === 'PR') {
+					if ($packageType == 'PR') {
 						// Profilepack ke liye
 						$package = $this->Profilepack->find('all')
 							->where(['id' => $subscription['package_id']])
@@ -278,7 +279,7 @@ class JobpostController extends AppController
 								'expiry_date' => $subscription['expiry_date']->format('Y-m-d H:i:s')
 							];
 						}
-					} elseif ($packageType === 'RC') {
+					} elseif ($packageType == 'RC') {
 						// RecruiterPack ke liye
 						$package = $this->RecuriterPack->find('all')
 							->where(['id' => $subscription['package_id']])
@@ -293,7 +294,7 @@ class JobpostController extends AppController
 								'expiry_date' => $subscription['expiry_date']->format('Y-m-d H:i:s')
 							];
 						}
-					} elseif ($packageType === 'RE') {
+					} elseif ($packageType == 'RE') {
 						// RE type ke liye (expiry check nahi karna)
 						$package = $this->RequirementPack->find('all')
 							->where(['id' => $subscription['package_id']])
@@ -1423,10 +1424,6 @@ class JobpostController extends AppController
 		$packlimit = $this->activePackage(); // Fetch package details
 		$packfeature = $this->Packfeature->find('all')->where(['id' => $packlimit['id']])->first();
 
-		if ($packfeature['number_of_quote_daily'] == 0) {
-			$this->Flash->error(__('You cannot send more free quotes today. You can now Send Paid quotes.'));
-		}
-
 		$this->set('packfeature', $packfeature);
 
 		$access_job = $packlimit['access_job'];
@@ -1605,6 +1602,38 @@ class JobpostController extends AppController
 
 			$this->Flash->success(__('Your Answer  Post Successfully!!.'));
 		}
+		$viewrequirads = $this->advertisedjob(1, $id);
+		$this->set('viewrequirads', $viewrequirads);
+	}
+	// end
+
+
+	// for admin 
+	public function jobdetails($id)
+	{
+		$this->loadModel('Subscription');
+		$this->loadModel('Likejobs');
+		$this->loadModel('Report');
+		$this->loadModel('Profilepack');
+		$this->loadModel('Requirement');
+		$this->loadModel('JobView');
+		$this->loadModel('Userjobanswer');
+		$this->loadModel('JobApplication');
+		$this->loadModel('Settings');
+		$this->loadModel('JobQuote');
+		$this->loadModel('Packfeature');
+
+		$this->set('job_id', $id);
+		$requirementdatacheck = $this->Requirement->find('all')->contain(['Users'])->where(['Requirement.id' => $id])->first();
+		$this->set('requirementdatacheck', $requirementdatacheck);
+
+		try {
+			$details = $this->Requirement->find('all')->contain(['RequirmentVacancy' => ['Skill', 'Currency'], 'Eventtype', 'Users', 'Jobquestion' => ['Questionmare_options_type', 'Jobanswer']])->where(['Requirement.id' => $id])->first();
+			$this->set('requirement_data', $details);
+		} catch (FatalErrorException $e) {
+			$this->log("Error Occured", 'error');
+		}
+
 		$viewrequirads = $this->advertisedjob(1, $id);
 		$this->set('viewrequirads', $viewrequirads);
 	}

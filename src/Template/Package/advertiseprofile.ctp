@@ -240,8 +240,6 @@
                       $(".locfield .longinput").val("");
                       $(".locfield #latitudecurrent").val("");
                       $(".locfield #longitudecurrent").val("");
-                    } else {
-
                     }
 
                   });
@@ -629,54 +627,57 @@
   function validateform() {
     console.log('validateform');
 
-    error = '';
-    //alert('0');
-    // alert($('#event_from_date').val());
-    event_from_date = new Date($('#event_from_date').val());
-    event_to_date = new Date($('#event_to_date').val());
+    var error = '';
 
-    var day = event_from_date.getDate();
-    var months = event_from_date.getMonth();
-    var years = event_from_date.getFullYear();
+    var fromVal = $('#event_from_date').val();
+    var toVal = $('#event_to_date').val();
 
-    var fromdate = years + '-' + months + '-' + day;
-    var dayto = event_to_date.getDate();
-    var monthsto = event_to_date.getMonth();
-    var yearsto = event_to_date.getFullYear();
-    var todate = yearsto + '-' + monthsto + '-' + dayto;
+    // Check empty dates
+    if (!fromVal || !toVal) {
+      error = "Please select both Advertisement start and end dates.<br>";
+    }
 
-    console.log(fromdate, 'fromdate');
-    console.log(todate, 'todate');
-    if (todate <= fromdate) {
+    var event_from_date = new Date(fromVal);
+    var event_to_date = new Date(toVal);
+
+    // Remove time part for accurate comparison
+    event_from_date.setHours(0, 0, 0, 0);
+    event_to_date.setHours(0, 0, 0, 0);
+
+    // Date validation
+    if (event_to_date < event_from_date) {
       $("#totalamt").val('0');
-      error = error + "Advertisement End date cannot be less than Advertisement start date.<br>";
-    } else {
-      var start = $('#event_from_date').val();
-      var end = $('#event_to_date').val();
-      // end - start returns difference in milliseconds 
-      var diff = new Date(event_to_date - event_from_date);
-      // get days
-      var days = diff / 1000 / 60 / 60 / 24;
-      var daydiff = Math.round(days);
-      var amt = '<?php echo $bannerpackid['cost_per_day']; ?>';
+      error += "Advertisement end date cannot be earlier than start date.<br>";
+    }
+
+    // Calculate amount only if no error
+    if (error == '') {
+      var diffTime = event_to_date.getTime() - event_from_date.getTime();
+      var daydiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      var amt = <?php echo (int)$bannerpackid['cost_per_day']; ?>;
       var totalamt = amt * daydiff;
-      //alert(totalamt);
-      if (isNaN(totalamt)) {
+
+      if (isNaN(totalamt) || totalamt <= 0) {
         $("#totalamt").val('');
       } else {
         $("#totalamt").val(totalamt);
       }
-    }
+    }    
 
+    // Show error dialog
     if (error != '') {
       BootstrapDialog.alert({
         size: BootstrapDialog.SIZE_SMALL,
         title: "<img title='Book an Artiste' src='<?php echo SITE_URL; ?>/images/book-an-artiste-logo.png' alt='Book an Artiste' class='img-circle' height='26' width='26'> - Advertisement !!",
         message: "<h5>" + error + "</h5>"
       });
+
       $('#event_to_date').val('');
       return false;
     }
+
+    return true;
   }
 </script>
 

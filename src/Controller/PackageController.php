@@ -121,32 +121,33 @@ class PackageController extends AppController
 
     $currentdate = date('Y-m-d H:i:s');
     $user_id = $this->request->session()->read('Auth.User.id');
-    $subscriptions = $this->Subscription->find()
-      ->where([
-        'Subscription.user_id' => $user_id,
-        'OR' => [
-          ['Subscription.package_type' => 'PR', 'DATE(Subscription.expiry_date) >=' => date('Y-m-d', strtotime($currentdate))],
-          ['Subscription.package_type' => 'RC']
-        ]
-      ])
-      ->toArray();
+    // $subscriptions = $this->Subscription->find()
+    //   ->where([
+    //     'Subscription.user_id' => $user_id,
+    //     'OR' => [
+    //       ['Subscription.package_type' => 'PR', 'DATE(Subscription.expiry_date) >=' => date('Y-m-d', strtotime($currentdate))],
+    //       ['Subscription.package_type' => 'RC']
+    //     ]
+    //   ])
+    //   ->toArray();
+
+    // pr($subscriptions);exit;
 
     $profile = $this->Subscription->find()
       ->where([
         'Subscription.user_id' => $user_id,
         'Subscription.package_type' => 'PR',
-        'DATE(Subscription.expiry_date) >=' => date('Y-m-d', strtotime($currentdate))
+        // 'DATE(Subscription.expiry_date) >=' => date('Y-m-d', strtotime($currentdate))
       ])
       ->order(['Subscription.package_id' => 'desc'])
       ->first();
 
-    // pr($profile);exit;
 
     $recuriter = $this->Subscription->find()
       ->where([
         'Subscription.user_id' => $user_id,
         'Subscription.package_type' => 'RC',
-        'DATE(Subscription.expiry_date) >=' => date('Y-m-d', strtotime($currentdate))
+        // 'DATE(Subscription.expiry_date) >=' => date('Y-m-d', strtotime($currentdate))
       ])
       ->order(['Subscription.package_id' => 'desc'])
       ->first();
@@ -210,6 +211,7 @@ class PackageController extends AppController
     ];
 
     $pacakgename = isset($packageNameLookup[$package]) ? $packageNameLookup[$package] : '';
+    // pr($pacakgename);exit;
 
     $this->set('package', $package);
     $this->set('pacakgename', $pacakgename);
@@ -217,9 +219,7 @@ class PackageController extends AppController
 
 
 
-  /*  ----------------------------------------------------------------------------------  
-          -Buy quote payments
-          ----------------------------------------------------------------------------------  */
+  /*  ---------------------------Buy quote payments--------------------------  */
   public function buyquote($job_id)
   {
     $this->set('job_id', $job_id);
@@ -229,7 +229,6 @@ class PackageController extends AppController
     $quote_packages = $this->Quotepack->find('all')->where(['Quotepack.status' => 'Y'])->order(['Quotepack.priorites' => 'ASC'])->toarray();
     $this->set(compact('quote_packages'));
   }
-
 
   public function buyquotepayment()
   {
@@ -356,9 +355,7 @@ class PackageController extends AppController
     return $this->redirect($url);
   }
 
-  /*  ----------------------------------------------------------------------------------  
-          -Job posting payments
-      ----------------------------------------------------------------------------------  */
+  /*  ---------------------------Job posting payments--------------------------  */
 
   function jobposting($package = null)
   {
@@ -623,9 +620,7 @@ class PackageController extends AppController
     return $this->redirect('/jobpost/jobpost/' . $clone_id);
   }
 
-  /*  ----------------------------------------------------------------------------------  
-        Feature job Payment 
-        ----------------------------------------------------------------------------------  */
+  /*  --------------------------Feature job Payment--------------------------  */
   public function fjobpayment()
   {
     $this->loadModel('Invoicereceipt');
@@ -1995,8 +1990,6 @@ class PackageController extends AppController
 
 
   //=========================================advertise my profile====================================
-  //  ============================================================================================
-  //  ===========================================================================================
 
   public function advertiseprofile()
   {

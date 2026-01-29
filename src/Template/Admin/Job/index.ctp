@@ -162,7 +162,8 @@
                     <tr>
                       <td><?php echo $counter; ?></td>
                       <td>
-                        <a href="<?php echo SITE_URL; ?>/applyjob/<?php echo $Job['id']; ?>" target="_blank"><?php echo $Job['title']; ?></a>
+                        <!-- <a href="<?php echo SITE_URL; ?>/applyjob/<?php echo $Job['id']; ?>" target="_blank"><?php echo $Job['title']; ?></a> -->
+                        <a href="<?php echo SITE_URL; ?>/jobdetails/<?php echo $Job['id']; ?>" target="_blank"><?php echo $Job['title']; ?></a>
                       </td>
                       <td>
                         <a class="globalModals" href="<?php echo SITE_URL; ?>/admin/job/details/<?php echo $Job['id'] ?>" data-target="#globalModal" data-toggle="modal"> View</a>

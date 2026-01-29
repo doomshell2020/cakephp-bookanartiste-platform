@@ -216,17 +216,18 @@ class UsersController extends AppController
 		$userLoginInfo = $this->request->session()->read('Auth.User');
 		$current_year = date('Y');
 
-
 		if ($userLoginInfo['id']) {
 			return $this->redirect(['controller' => 'profile', 'action' => 'viewprofile']);
 		}
 
-
 		if ($this->request->is('post')) {
 			// pr($this->request->data);exit;
 			$userIP = $this->request->clientIp();
+			// pr($userIP);exit;
 			$reqData = $this->request->data;
 			$currentIp = $_SERVER['REMOTE_ADDR'];
+
+			// pr($_SERVER);exit;
 
 			$check_email = $this->Users->find('all')->where(['Users.email' => $reqData['email']])->first();
 
@@ -331,20 +332,24 @@ class UsersController extends AppController
 				$this->Users->save($userEntity);
 				$this->Auth->setUser($user);
 
+				// pr($_SERVER);exit;
 				// Login check data insert
+				// $loginCheck = $this->Loginusercheck->find()->where(['user_id' => $user['id'], 'ip' => $currentIp])->first() ?? $this->Loginusercheck->newEntity();
 				$this->loadModel('Loginusercheck');
-				$loginCheck = $this->Loginusercheck->find()->where(['user_id' => $user['id'], 'ip' => $currentIp])->first() ?? $this->Loginusercheck->newEntity();
 				$sessionToken = bin2hex(random_bytes(32)); // Generate a unique token
 				$userAgent = $_SERVER['HTTP_USER_AGENT'];
 				$session->write('session_token', $sessionToken);
 				$session->write('login_user_ip', $currentIp);
-				$loginCheck = $this->Loginusercheck->patchEntity($loginCheck, [
-					'session_id' => session_id(),
-					'user_id' => $user['id'],
-					'user_agent' => $userAgent,
+				// Login check data insert (ALWAYS NEW ENTRY)
+				$loginCheck = $this->Loginusercheck->newEntity([
+					'session_id'    => session_id(),
+					'user_id'       => $user['id'],
+					'user_agent'    => $userAgent,
 					'session_token' => $sessionToken,
-					'ip' => $currentIp
+					'ip'            => $currentIp,
+					'created'       => date('Y-m-d H:i:s')
 				]);
+
 				$this->Loginusercheck->save($loginCheck);
 
 				// Handle redirection
@@ -365,49 +370,80 @@ class UsersController extends AppController
 	private function canLogin($user_pack, $user)
 	{
 		$userId = $user['id'];
-		// Get the number of current login attempts
+
+		/** 1. Count active login sessions */
 		$loginAttempts = $this->Loginusercheck->find()
 			->where(['user_id' => $userId])
 			->count();
 
-		/** === 1. Allow Login if No Previous Logins or Same IP === */
-		if ($loginAttempts == 0) {
-			return true;
+		/** 2. Get active subscription */
+		$today = date('Y-m-d');
+		$subscription = $this->Subscription->find()
+			->where([
+				'user_id' => $userId,
+				'package_type' => 'RC',
+				'status' => 'Y',
+				'expiry_date >=' => $today
+			])
+			->order(['id' => 'DESC'])
+			->first();
+
+		/** 3. Decide package rules */
+		if (!empty($subscription)) {
+			$packageRules = $this->RecuriterPack->find()
+				->select(['number_of_email', 'multipal_email_login'])
+				->where(['id' => $subscription->package_id])
+				->first();
+		} else {
+			$packageRules = $user_pack;
 		}
 
-		/** === 2. Restrict Non-Talent Users (role_id = 3) from Multiple Logins === */
-		if ($user['role_id'] == 3 && $loginAttempts > 0) {
-			$session = $this->request->session();
-			$session->write('login_fail_user_id', $userId);
-
-			$this->Flash->error(__('You cannot log in on multiple devices. Please log out from another device before attempting to log in again.'), ['key' => 'login_fail_non_talent']);
-
+		if (empty($packageRules)) {
 			return false;
 		}
 
-		/** === 3. Restrict Based on Recruiter Package Settings === */
-		if ($user_pack['multipal_email_login'] == 'N') {
-			// $this->Flash->error(__('Purchase a recruiter package to use multiple logins.'));
-			$session = $this->request->session();
-			$session->write('login_fail_user_id', $userId);
-			$this->Flash->error(__('You cannot log in on multiple devices. Please log out from another device before attempting to log in again.'), ['key' => 'login_fail_non_talent']);
+		// pr($packageRules);exit;
+
+		$allowedLogins = (int)$packageRules['number_of_email'];
+		$usedLogins    = $loginAttempts;
+
+		/** 4. Non-talent restriction */
+		if ($user['role_id'] == 3 && $usedLogins > 0) {
+			$this->request->session()->write('login_fail_user_id', $userId);
+
+			$this->Flash->error(
+				__("Multiple login allowed nahi hai. Abhi 1 device already logged in hai."),
+				['key' => 'login_fail_non_talent']
+			);
 			return false;
 		}
 
-		/** === 4. Check if User Exceeds Allowed Login Count === */
-		$userCountLogged = $loginAttempts + 1;
+		/** 5. Package does not allow multiple login */
+		if ($packageRules['multipal_email_login'] == 'N' && $usedLogins > 0) {
+			$this->request->session()->write('login_fail_user_id', $userId);
 
-		if ($userCountLogged > $user_pack['number_of_email']) {
-			$session = $this->request->session();
-			$session->write('login_fail_user_id', $userId);
+			$this->Flash->error(
+				__("Aapke package me sirf 1 login allowed hai. Abhi already 1 login active hai."),
+				['key' => 'login_fail_non_talent']
+			);
+			return false;
+		}
 
-			$this->Flash->error(__('You cannot log in on multiple devices. Please log out from another device before attempting to log in again.'), ['key' => 'login_fail_non_talent']);
+		/** 6. Login limit exceeded */
+		if ($allowedLogins > 0 && $usedLogins >= $allowedLogins) {
+			$this->request->session()->write('login_fail_user_id', $userId);
 
+			$this->Flash->error(
+				__("Login limit exceeded. Allowed: {$allowedLogins}, Already logged in: {$usedLogins}. Pehle kisi device se logout karein."),
+				['key' => 'login_fail_non_talent']
+			);
 			return false;
 		}
 
 		return true;
 	}
+
+
 
 	// private function canLogin($user_pack, $user)
 	// {
@@ -1470,40 +1506,46 @@ class UsersController extends AppController
 
 	public function logout()
 	{
-		$this->loadModel('Loginusercheck');
 		$this->autoRender = false;
-		// Get user ID
-		$userId = $this->Auth->user('id');
-		$loginUserIp = $_SESSION['login_user_ip'] ?? null;
-		$session_token = $_SESSION['session_token'] ?? null;
+		$this->loadModel('Loginusercheck');
 
 		$session = $this->request->session();
-		if (!$userId) {
-			$this->Flash->error('Invalid session or user not found.');
-			return $this->redirect(['controller' => 'users', 'action' => 'login']);
-		}
+
+		// Read BEFORE logout
+		$userId       = $this->Auth->user('id');
+		$sessionToken = $session->read('session_token');
+
+		// Clear remember-me cookies
 		$this->Cookie->delete('remember_me');
 		$this->Cookie->delete('email');
 		$this->Cookie->delete('password');
-		// Perform logout
-		$logout = $this->Auth->logout();
-		if ($logout) {
+
+		// Logout user
+		$this->Auth->logout();
+
+		// Delete only current session entry
+		if (!empty($userId) && !empty($sessionToken)) {
 			$userLoginRecord = $this->Loginusercheck->find()
-				->where(['user_id' => $userId, 'session_token' => $session_token])
+				->where([
+					'user_id' => $userId,
+					'session_token' => $sessionToken
+				])
 				->first();
-			if (!$userLoginRecord) {
-				$userLoginRecord = $this->Loginusercheck->find()
-					->where(['user_id' => $userId, 'session_token' => ''])
-					->first();
-			}
+
 			if ($userLoginRecord) {
 				$this->Loginusercheck->delete($userLoginRecord);
 			}
 		}
+
+		// Destroy session safely
 		$session->destroy();
+
 		$this->Flash->success('You are now logged out.');
 		return $this->redirect(['controller' => 'users', 'action' => 'login']);
 	}
+
+
+
 
 	public function logoutall()
 	{

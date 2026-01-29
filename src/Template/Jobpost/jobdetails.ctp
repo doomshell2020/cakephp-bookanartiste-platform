@@ -360,7 +360,7 @@
 
                       <li> <a href="javascript:void(0)" data-toggle="modal" data-target="#reportuser" class="bg-blue <?php echo (isset($reportcheck) && $reportcheck > 0) ? 'active' : ''; ?>" title="Report" id="reportcheck"><i class="fa fa-flag"></i></a>
 
-                        <div class="report" id="reportlikes"><?php echo $totalreports; ?></div>
+                        <div class="report" id="reportlikes"></div>
 
                       </li>
                       <?php $savejob = $this->Comman->userjobsave($requirement_data['id']); ?>
@@ -945,7 +945,6 @@
     <!--end -->
 
 
-
     <!--Apply Job Rquest -->
     <div id="aplyreqyest<?php echo $requirement_data['id'] ?>" class="modal fade" role="dialog">
       <div class="modal-dialog">
@@ -980,8 +979,6 @@
     </div>
 
     <!--end -->
-
-
 
     <!--Apply Job Rquest -->
     <div id="aplyrejectjob<?php echo $requirement_data['id'] ?>" class="modal fade" role="dialog">

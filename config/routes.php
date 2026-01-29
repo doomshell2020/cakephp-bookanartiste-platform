@@ -119,6 +119,7 @@ Router::scope('/', function (RouteBuilder $routes) {
 
     // Apply Job
     $routes->connect('applyjob/:slug', ['controller' => 'Jobpost', 'action' => 'applyjob'], ['pass' => ['slug']]);
+    $routes->connect('jobdetails/:slug', ['controller' => 'Jobpost', 'action' => 'jobdetails'], ['pass' => ['slug']]);
     $routes->connect('/admin', ['controller' => 'Logins', 'action' => 'index', 'admin' => true]);
     //$routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
     Router::prefix('Admin', function ($routes) {

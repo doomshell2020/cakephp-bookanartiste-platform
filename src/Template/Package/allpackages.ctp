@@ -412,7 +412,8 @@ $role_id = $user['role_id'];
 							<br>
 							<span><b>Expiry Date:</b>
 								<!-- code change packange  -->
-								<?php $date1 = new DateTime($currentpackanme[0]);
+								<?php 
+								$date1 = new DateTime($currentpackanme[0]);
 								$date2 = new DateTime($currentpackanme[1]);
 
 								// Output formatted dates

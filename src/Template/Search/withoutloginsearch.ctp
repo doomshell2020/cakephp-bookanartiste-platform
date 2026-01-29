@@ -1793,13 +1793,8 @@
           <strong id="limittextbox"></strong>
         </div>
         <form id="multiplejob" method="POST">
-
-
-
-
         </form>
       </div>
-
 
       <div class="modal-footer" style="border-top: none">
         <button type="submit" class="btn btn-default" form="multiplejob">Apply</button>
@@ -1821,21 +1816,12 @@
       </div>
 
       <div class="modal-body">
-
-
         <div class="alert alert-warning alert-dismissible" id="sendquotelimitalert" style="display: none">
-
           <strong id="sendlimittext"></strong>
         </div>
-
         <form id="multiplequote" method="POST">
-
-
-
-
         </form>
       </div>
-
 
       <div class="modal-footer" style=" border-top:none; ">
         <button type="submit" class="btn btn-default" form="multiplequote">Send Quote</button>
@@ -1856,22 +1842,12 @@
       </div>
 
       <div class="modal-body">
-
-
         <div class="alert alert-warning alert-dismissible" id="sendquotelimitalert" style="display: none">
-
           <strong id="sendlimittext"></strong>
         </div>
-
         <form id="singlequote" method="POST">
-
-
-
-
         </form>
       </div>
-
-
       <div class="modal-footer" style=" border-top:none; ">
         <button type="submit" class="btn btn-default" form="singlequote">Send Quote</button>
       </div>
@@ -1882,8 +1858,6 @@
 
 <script type="text/javascript">
   var SITE_URL = '<?php echo SITE_URL; ?>/';
-
-
 
   $('#singlequote').submit(function(event) {
 
@@ -1978,9 +1952,7 @@
               <?php echo $this->Form->email('email', array('class' => 'form-control', 'placeholder' => 'Enter Your Email', 'required' => true, 'readonly', 'autocomplete' => 'off', 'id' => 'username', 'label' => false, 'value' => $this->request->session()->read('Auth.User.email'))); ?>
             </div>
           </div>
-
-
-
+          
           <div class="form-group">
 
             <div class="col-sm-6">
